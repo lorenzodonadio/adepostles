@@ -1,5 +1,5 @@
 # Set the executable name with versioning
-set(EXECUTABLE_NAME "main-${GIT_VERSION}")
+set(EXECUTABLE_NAME "main${GIT_VERSION}")
 
 # Gather all the Fortran source files in the src directory
 file(GLOB SRC_FILES *.f90)

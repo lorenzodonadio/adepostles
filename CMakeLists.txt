@@ -64,7 +64,6 @@ add_subdirectory(src)
 # Retrieve the Git version information
 find_package(Git QUIET)
 if (GIT_FOUND)
-message("GIT_VERSION ${GIT_VERSION}")
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -76,10 +75,4 @@ execute_process(
     endif()
 if (GIT_FOUND)
 endif()
-
-if(EXISTS GIT_VERSION)
-    set(GIT_VERSION "unknown")
-endif()
         
-message("GIT_VERSION ${GIT_VERSION}")
-    
