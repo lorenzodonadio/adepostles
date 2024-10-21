@@ -76,8 +76,10 @@ execute_process(
     endif()
 if (GIT_FOUND)
 endif()
-set(GIT_VERSION == "")
-        set(GIT_VERSION ${GIT_VERSION})
+
+if(EXISTS GIT_VERSION)
+    set(GIT_VERSION "unknown")
+endif()
         
 message("GIT_VERSION ${GIT_VERSION}")
     
