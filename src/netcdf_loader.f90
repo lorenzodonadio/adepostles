@@ -1,8 +1,6 @@
 module netcdf_loader
    use netcdf
    use iso_fortran_env, only: real32
-   use config, only: field_load_chunk_size
-   use modglobal, only: zt, zm, xt, xm, yt, ym,rtime, ekh, u, v, w , total_chunks
    implicit none
 
 contains
@@ -51,6 +49,8 @@ contains
    end subroutine get_and_read_variable
 
    subroutine get_and_read_variable_chunk(ncid, var_name, varid, var_data, chunk_number)
+      use config, only: field_load_chunk_size
+
       integer, intent(in) :: ncid, chunk_number
       character(len=*), intent(in) :: var_name
       integer, intent(out) :: varid

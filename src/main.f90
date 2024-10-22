@@ -1,7 +1,8 @@
 program adepostles
    use config, only: field_dump_path, read_config_file
    use test_nc, only: do_test_nc
-   use modglobal, only: total_chunks,load_dimensions,load_fields_chunk, validate_time_size , allocate_fields
+   use modglobal, only: total_chunks,load_dimensions,validate_time_size
+   use modfields,only:allocate_fields,load_fields_chunk
    implicit none
    integer :: chunk
    ! Read the configuration from the namelist file

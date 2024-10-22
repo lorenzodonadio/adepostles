@@ -1,15 +1,12 @@
 module modglobal
    use, intrinsic :: iso_fortran_env
-   use netcdf
-   use netcdf_loader, only :nchandle_error, get_dimension_size, get_and_read_variable
-   use config, only: field_load_chunk_size
-   use modfields, only: u,v,w,ekh
    implicit none
-   integer :: total_chunks
+
+
    ! dimensions zm = zf, zt = zh in dales, so why not unify how it writes to nc. idk
    real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:),rtime(:)
-   ! fields
 
+   integer :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
    !dimensions
    integer ::  imax, jmax, kmax, time_size
    integer ::  i1,i2,ih,j1,j2,jh,k1
@@ -36,6 +33,7 @@ module modglobal
 
 contains
    subroutine init_global()
+      integer :: k
       i1 = imax +1
       j1 = jmax +1
       i2 = imax +2
@@ -75,6 +73,9 @@ contains
    end subroutine init_global
 
    subroutine load_dimensions(filename)
+      use netcdf
+      use netcdf_loader, only :nchandle_error, get_dimension_size, get_and_read_variable
+
       character(len=*), intent(in) :: filename
       integer :: ncid, retval
 
@@ -127,37 +128,9 @@ contains
 
    end subroutine load_dimensions
 
-   subroutine load_fields_chunk(filename, chunk_number)
-      character(len=*), intent(in) :: filename
-      integer, intent(in) :: chunk_number
-      integer :: ncid, retval
-
-
-      ! Variable IDs for time-dependent variables
-      integer :: u_varid, v_varid, w_varid, ekh_varid
-
-      ! Time-dependent variable arrays (dynamic allocation)
-
-      ! Open the NetCDF file
-      retval = nf90_open(filename, NF90_NOWRITE, ncid)
-      call nchandle_error(retval, 'Error opening file: '//trim(filename))
-
-      ! Read time-dependent variables from the file
-      call get_and_read_variable_chunk(ncid, 'u', u_varid, u, chunk_number)
-      call get_and_read_variable_chunk(ncid, 'v', v_varid, v, chunk_number)
-      call get_and_read_variable_chunk(ncid, 'w', w_varid, w, chunk_number)
-      call get_and_read_variable_chunk(ncid, 'ekh', ekh_varid, ekh, chunk_number)
-
-      ! Close the NetCDF file
-      retval = nf90_close(ncid)
-      call nchandle_error(retval, 'Error closing file: '//trim(filename))
-
-      ! print *, 'Fields variables loaded successfully from ', trim(filename), 'for chunk: ', chunk_number,'/',total_chunks
-      print *, 'Fields loaded - chunk: ', chunk_number,'/',total_chunks
-   end subroutine load_fields_chunk
-
-
    subroutine validate_time_size()
+      use config, only: field_load_chunk_size
+
       if (mod(size(rtime), field_load_chunk_size) /= 0) then
          print *, 'time_size:', size(rtime)
          print *, 'field_load_chunk_size :', field_load_chunk_size

@@ -12,23 +12,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -Wall -Wextra -std=f2008 -fPIC -fcheck=all -fbacktrace -fmax-errors=3 -g")
 
 
-# # Check for HDF5 environment variables first
-# if(DEFINED ENV{HDF5_INCLUDE} AND DEFINED ENV{HDF5_LIB})
-#     message(STATUS "Using HDF5 paths from environment variables.")
-#     set(HDF5_INCLUDE_DIR $ENV{HDF5_INCLUDE})
-#     set(HDF5_LIB_DIR $ENV{HDF5_LIB})
-#     set(HDF5_LIBRARIES "-L${HDF5_LIB_DIR} -lhdf5_fortran -lhdf5")
-#     include_directories(${HDF5_INCLUDE_DIR})
-# else()
-#     message(STATUS "Using find_package to locate HDF5.")
-#     find_package(HDF5 REQUIRED COMPONENTS Fortran)
-#     if(HDF5_FOUND)
-#         message(STATUS "Found HDF5: ${HDF5_LIBRARIES}")
-#         include_directories(${HDF5_INCLUDE_DIRS})
-#     endif()
-# endif()
-
-
 # Check if the environment variables for NetCDF are set, otherwise use nf-config
 if(DEFINED ENV{NETCDF_INCLUDE} AND DEFINED ENV{NETCDF_LIB})
     message(STATUS "Using NetCDF paths from environment variables.")
@@ -55,7 +38,6 @@ link_directories(${NC_LIB_DIR})
 
 
 # Update the NetCDF linking to include HDF5
-# set(FLIBS_NC "${FLIBS_NC} ${HDF5_LIBRARIES}")
 message("FLIBS_NC ${FLIBS_NC}")
 
 # Add the source directory where the .f90 files are located
@@ -73,6 +55,8 @@ execute_process(
     set(GIT_VERSION ${GIT_VERSION})
     # Pass the Git version information to the src directory
     endif()
-if (GIT_FOUND)
+    if (GIT_FOUND)
 endif()
+    
+message("GIT_VERSION ${GIT_VERSION}")
         
