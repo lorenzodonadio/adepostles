@@ -6,7 +6,7 @@ module modglobal
    ! dimensions zm = zf, zt = zh in dales, so why not unify how it writes to nc. idk
    real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:),rtime(:)
    ! time loop variables
-   integer(int64) :: simtime
+   integer(int64) :: simtime = 0
    integer :: current_chunk = 1
    integer :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
    !dimensions
