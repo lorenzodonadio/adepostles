@@ -58,6 +58,7 @@ contains
       integer :: retval
       integer :: start(4)
 
+      ! For debugging purposes
       ! call get_variable_dimensions(ncid,var_name)
 
       retval = nf90_inq_varid(ncid, trim(var_name), varid)

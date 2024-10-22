@@ -2,6 +2,9 @@ module modfields
    use iso_fortran_env
    implicit none
 
+   real(real32), allocatable :: rhobf(:)   !< density full level
+   real(real32), allocatable :: rhobh(:)   !< density half level
+
    real(real32), allocatable :: ekh(:,:,:,:) !< k-coefficient for eddy diffusivity ekh(xt,yt,zt,time) m2/s
    real(real32), allocatable :: u(:,:,:,:)   !< u(xm,yt,zt,time) m/s
    real(real32), allocatable :: v(:,:,:,:)   !< v(xt,ym,zt,time) m/s
@@ -16,18 +19,16 @@ module modfields
    real(real32), allocatable :: v0(:,:,:)   !< v at time t m/s
    real(real32), allocatable :: w0(:,:,:)   !< w at time t m/s
 
-   real(real32), allocatable :: ekhp(:,:,:) !< ekhm at time t+1
-   real(real32), allocatable :: up(:,:,:)   !< u at time t+1 m/s
-   real(real32), allocatable :: vp(:,:,:)   !< v at time t+1 m/s
-   real(real32), allocatable :: wp(:,:,:)   !< w at time t+1 m/s
+   ! real(real32), allocatable :: ekhp(:,:,:) !< ekhm at time t+1
+   ! real(real32), allocatable :: up(:,:,:)   !< u at time t+1 m/s
+   ! real(real32), allocatable :: vp(:,:,:)   !< v at time t+1 m/s
+   ! real(real32), allocatable :: wp(:,:,:)   !< w at time t+1 m/s
 
-   real(real32), allocatable :: ekhm(:,:,:) !< ekhm at time t-1
-   real(real32), allocatable :: um(:,:,:)   !< u at time t-1m/s
-   real(real32), allocatable :: vm(:,:,:)   !< v at time t-1 m/s
-   real(real32), allocatable :: wm(:,:,:)   !< w at time t-1m/s
+   ! real(real32), allocatable :: ekhm(:,:,:) !< ekhm at time t-1
+   ! real(real32), allocatable :: um(:,:,:)   !< u at time t-1m/s
+   ! real(real32), allocatable :: vm(:,:,:)   !< v at time t-1 m/s
+   ! real(real32), allocatable :: wm(:,:,:)   !< w at time t-1m/s
 
-   real(real32), allocatable :: rhobf(:)   !< density full level
-   real(real32), allocatable :: rhobh(:)   !< density half level
 
 contains
 
@@ -54,20 +55,22 @@ contains
       allocate(v0   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(w0   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
-      allocate(ekhp (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(up   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(vp   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(wp   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! do we actually need these? I dont think so
+      ! allocate(ekhp (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(up   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(vp   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(wp   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
-      allocate(ekhm (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(um   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(vm   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(wm   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(ekhm (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(um   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(vm   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      ! allocate(wm   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
    end subroutine allocate_fields
 
 
    subroutine load_fields_chunk(filename, chunk_number)
+      use modglobal, only:i1,j1,kmax
       use netcdf
       use netcdf_loader, only :nchandle_error, get_and_read_variable_chunk
       use modglobal,only: total_chunks
@@ -85,11 +88,22 @@ contains
       retval = nf90_open(filename, NF90_NOWRITE, ncid)
       call nchandle_error(retval, 'Error opening file: '//trim(filename))
 
+
       ! Read time-dependent variables from the file
-      call get_and_read_variable_chunk(ncid, 'u', u_varid, u, chunk_number)
-      call get_and_read_variable_chunk(ncid, 'v', v_varid, v, chunk_number)
-      call get_and_read_variable_chunk(ncid, 'w', w_varid, w, chunk_number)
-      call get_and_read_variable_chunk(ncid, 'ekh', ekh_varid, ekh, chunk_number)
+      ! kmax instead of k1 because of number of ghost cells
+      call get_and_read_variable_chunk(ncid, 'u', u_varid, u(2:i1,2:j1,2:kmax,:), chunk_number)
+
+      ! For debuggind purposes,TODO implement a debug flag?
+      ! print *, shape(u)
+      ! print *, shape(u(2:i1,2:j1,2:kmax,:))
+      ! print *, 'Vertical U slice: u(5,5,:,1)'
+      ! print *, u(5,5,:,1)
+      ! print *, 'Horizontal U slice'
+      ! print *, u(:,5,5,1)
+
+      call get_and_read_variable_chunk(ncid, 'v', v_varid, v(2:i1,2:j1,2:kmax,:), chunk_number)
+      call get_and_read_variable_chunk(ncid, 'w', w_varid, w(2:i1,2:j1,2:kmax,:), chunk_number)
+      call get_and_read_variable_chunk(ncid, 'ekh', ekh_varid, ekh(2:i1,2:j1,2:kmax,:), chunk_number)
 
       ! Close the NetCDF file
       retval = nf90_close(ncid)

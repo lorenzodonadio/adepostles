@@ -63,7 +63,7 @@ contains
       ! find the lowest and highest k level with a non-zero value in a_in
       k_low = -1
       do k=1,k1
-         if (any(a_in(:,:,k).ne.0.)) then
+         if (any(a_in(:,:,k) /= 0.)) then
             k_low = k
             exit
          endif
@@ -74,7 +74,7 @@ contains
       endif
 
       do k=k1,1,-1
-         if (any(a_in(:,:,k).ne.0.)) then
+         if (any(a_in(:,:,k) /= 0.)) then
             k_high = k
             exit
          endif

@@ -5,11 +5,16 @@ module modglobal
 
    ! dimensions zm = zf, zt = zh in dales, so why not unify how it writes to nc. idk
    real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:),rtime(:)
-
+   ! time loop variables
+   integer(int64) :: simtime
+   integer :: current_chunk = 1
    integer :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
    !dimensions
    integer ::  imax, jmax, kmax, time_size
-   integer ::  i1,i2,ih,j1,j2,jh,k1
+   integer ::  i1,i2,j1,j2,k1
+   integer :: ih = 2
+   integer :: jh = 2
+   integer :: kh = 1
 
    real :: dx              !<  grid spacing in x-direction
    real :: dy              !<  grid spacing in y-direction
@@ -55,18 +60,20 @@ contains
 
       allocate(dzf(k1),dzh(k1),delta(k1),deltai(k1))
       ! zm = zf, zt = zh
-      do  k=1,kmax
+      do  k=1,kmax-1
          dzf(k) = zt(k+1) - zt(k)
       end do
+      dzf(kmax) = dzf(kmax-1) ! outofbounds error if not
       dzf(k1) = dzf(kmax)
 
       dzh(1) = 2*zm(1)
-      do k=2,k1
+      do k=2,kmax
          dzh(k) = zm(k) - zm(k-1)
       end do
 
-      do k=1,k1
+      dzh(k1) = dzh(kmax) !avoid outofbounds error
 
+      do k=1,k1
          delta(k) = (dx*dy*dzf(k))**(1./3.)
          deltai(k) = 1./delta(k)     !can be overruled in modsubgrid in case anisotropic diffusion is applied
       end do
