@@ -2,6 +2,11 @@ module modfields
    use iso_fortran_env
    implicit none
 
+   integer :: nti = 0 !< next time index, index of closest fields measurement in future time
+   real :: dtfield !< delta t between the two currecly active fields
+   !this makes life easier
+   real(real32), allocatable :: chunktime(:) !< a time vector similar to rtime but that only holds the times for the loaded chunk of fields
+
    real(real32), allocatable :: rhobf_chunk(:,:)   !< density full level (zf,time)
    real(real32), allocatable :: rhobh_chunk(:,:)   !< density half level (zh,time)
    real(real32), allocatable :: rhobf(:)   !< density full level (zf)
@@ -21,23 +26,80 @@ module modfields
    real(real32), allocatable :: v0(:,:,:)   !< v at time t m/s
    real(real32), allocatable :: w0(:,:,:)   !< w at time t m/s
 
-   ! real(real32), allocatable :: ekhp(:,:,:) !< ekhm at time t+1
-   ! real(real32), allocatable :: up(:,:,:)   !< u at time t+1 m/s
-   ! real(real32), allocatable :: vp(:,:,:)   !< v at time t+1 m/s
-   ! real(real32), allocatable :: wp(:,:,:)   !< w at time t+1 m/s
+   real(real32), allocatable :: ekhp(:,:,:) !< ekhm at time t+1
+   real(real32), allocatable :: up(:,:,:)   !< u at time t+1 m/s
+   real(real32), allocatable :: vp(:,:,:)   !< v at time t+1 m/s
+   real(real32), allocatable :: wp(:,:,:)   !< w at time t+1 m/s
 
-   ! real(real32), allocatable :: ekhm(:,:,:) !< ekhm at time t-1
-   ! real(real32), allocatable :: um(:,:,:)   !< u at time t-1m/s
-   ! real(real32), allocatable :: vm(:,:,:)   !< v at time t-1 m/s
-   ! real(real32), allocatable :: wm(:,:,:)   !< w at time t-1m/s
+   real(real32), allocatable :: ekhm(:,:,:) !< ekhm at time t-1
+   real(real32), allocatable :: um(:,:,:)   !< u at time t-1m/s
+   real(real32), allocatable :: vm(:,:,:)   !< v at time t-1 m/s
+   real(real32), allocatable :: wm(:,:,:)   !< w at time t-1m/s
 
 
 contains
+   subroutine interpolate_fields_to_simtime()
+      !! populates u0,v0,w0,and ek0 to match simtime
+      use config, only: field_load_chunk_size
+      use modglobal, only: rsts
+      real  :: d !< distance to the next point in -1,0 space
+      !this happens only once per simulation, maybe solve with an initial field, DALES does not save the sim at time = 0
+
+      ! if the simtime is greater than the time at that index, increment the index
+      ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
+      if (rsts > chunktime(nti)) then
+         nti = nti+1
+
+         um = up
+         vm = vp
+         wm = wp
+         ekhm = ekhp
+
+         up = u(:,:,:,nti)
+         vp = v(:,:,:,nti)
+         wp = w(:,:,:,nti)
+         ekhp = ekh(:,:,:,nti)
+
+         dtfield = chunktime(nti)-chunktime(nti-1)
+      endif
+
+      ! for now simple linear interpolation, TODO improve this
+      ! the time from simulation to the next point divided by dt of the field
+      d = (chunktime(nti) - rsts) / dtfield
+      u0 = up*(1-d)+um*d
+      v0 = vp*(1-d)+vm*d
+      w0 = wp*(1-d)+wm*d
+      ekh0 = ekhp*(1-d)+ekhm*d
+      !TODO make a better handling profiles interpolation at nti ==1
+      if (nti == 1) then
+         ! to calculate the distance use a combination of old and new dtfield, only needed if irregulat timestep and even so i doubt it
+         ! d = (chunktime(nti) - rsts)/(0.5*dtfield+0.5*(chunktime(nti+1)-chunktime(nti)))
+         rhobf = rhobf_chunk(:,1)
+         rhobh = rhobh_chunk(:,1)
+      else
+         rhobf = rhobf_chunk(:,nti)*(1-d)+rhobf_chunk(:,nti-1)*d
+         rhobh = rhobh_chunk(:,nti)*(1-d)+rhobh_chunk(:,nti-1)*d
+      endif
+
+      ! write(*,*) 'simtime: ', rsts,' next time: ', chunktime(nti), ' delta: ',chunktime(nti) - rsts
+   end subroutine interpolate_fields_to_simtime
+
+   subroutine lerp_field_backwards(f_in,d,tidx, f_out)
+      !f(t) ~ f(0) + (dtsim/dtfield)*( f(-1) - f(0)) for interval -1,0, or nti-1 to nti
+      real, intent(in) :: f_in(:,:,:,:)
+      real, intent(in) :: d !< distance "
+      integer, intent(in) :: tidx
+      real, intent(out) ::  f_out(:,:,:)
+      f_out = f_in(:,:,:,tidx)*(1-d)+f_in(:,:,:,tidx-1)*d
+
+   end subroutine lerp_field_backwards
 
    subroutine allocate_fields()
       !< Allocates and sets to zero, all fields and profiles
       use modglobal, only:i1,ih,j1,jh,k1
       use config, only: field_load_chunk_size
+
+      allocate(chunktime(field_load_chunk_size))
 
       allocate(rhobf_chunk(k1,field_load_chunk_size))
       allocate(rhobh_chunk(k1,field_load_chunk_size))
@@ -61,33 +123,56 @@ contains
       allocate(v0   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(w0   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
-      !Initially set them to zero
-      rhobf_chunk = 0.0
-      rhobh_chunk = 0.0
+      allocate(ekhm (2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(um   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(vm   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(wm   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
-      rhobf = 0.0
-      rhobh = 0.0
-
-      ekh = 0.0
-      u = 0.0
-      v = 0.0
-      w = 0.0
-
-      c0 = 0.0
-      cp = 0.0
-      cm = 0.0
-
-      ekh0 = 0.0
-      u0 = 0.0
-      v0 = 0.0
-      w0 = 0.0
+      allocate(ekhp (2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(up   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(vp   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(wp   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
    end subroutine allocate_fields
 
+   subroutine init_interp_fields()
+      use config, only: field_dump_path,field_load_chunk_size
+      use modglobal, only :rtime
+      call load_fields_chunk(field_dump_path,1)
+
+      up = u(:,:,:,1)
+      vp = v(:,:,:,1)
+      wp = w(:,:,:,1)
+      ekhp = ekh(:,:,:,1)
+
+      um = up
+      vm = vp
+      wm = wp
+      ekhm = ekhp
+
+      dtfield = rtime(1)
+   end subroutine init_interp_fields
+
+   subroutine load_fields_intimeloop()
+      use modglobal, only: current_chunk, next_chunk_load_time, rtime, rsts
+      use config, only: field_dump_path,field_load_chunk_size
+
+      if (rsts > next_chunk_load_time) then
+         current_chunk = current_chunk + 1
+         next_chunk_load_time = rtime(current_chunk*field_load_chunk_size)
+         call load_fields_chunk(field_dump_path,current_chunk)
+
+         chunktime  = rtime(1+(current_chunk-1)*field_load_chunk_size:current_chunk*field_load_chunk_size)
+
+         nti = 1 ! reset the index here every loaded chunk
+      endif
+
+   end subroutine load_fields_intimeloop
+
    subroutine load_fields_chunk(filename, chunk_number)
       !< Loads fields: u,v,w,ekh (3d+time) and vertical profiles rhobf & rhobh (1d+time) for the specific time specified by the chunk_number
-      use modglobal, only:i1,j1,kmax
       use netcdf
+      use modglobal, only:i1,j1,kmax
       use netcdf_loader, only :nchandle_error, get_field_chunk,get_profile_chunk
       use modglobal,only: total_chunks
       character(len=*), intent(in) :: filename
@@ -190,6 +275,7 @@ contains
       f(:,:,1:kh,:) = (1.+1./dzh(1))*f(:,:,1+kh:2*kh,:)-(1/dzh(1))*f(:,:,2+kh:1+2*kh,:)
       f(:,:,k1-kh:k1,:) = (1.+1./dzh(kmax))*f(:,:,k1-2*kh:k1-kh,:) - (1/dzh(kmax))*f(:,:,kmax-2*kh:kmax-kh,:)
 
-
    end subroutine pad_field
+
+
 end module modfields

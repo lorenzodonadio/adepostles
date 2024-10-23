@@ -13,9 +13,9 @@ module config
    logical :: lperiodic_field_pad = .true.  !< if to use periodic BC for reconstructing the field ghost cells, if set to false it uses interpolation
 
    integer :: iexpnr = -1                    ! Default value indicates it must be specified
-   integer :: runtime = 25                   ! Sensible default
-   integer :: dtmax = 1                      ! Sensible default
-   integer :: integration_scheme = 1         ! Sensible default
+   integer :: runtime = 25                   !< seconds
+   integer :: dtmax = 1                      !< seconds
+   integer :: integration_scheme = 1         !< 1. euler, 2.heun, 3.rk3, 4. rk4, (only 1 supported so far)
    integer :: field_load_chunk_size = 100    ! Sensible default
    character(len=256) :: field_dump_path = ''  ! Must be specified
 

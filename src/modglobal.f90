@@ -2,12 +2,17 @@ module modglobal
    use, intrinsic :: iso_fortran_env
    implicit none
 
-
    ! dimensions zm = zf, zt = zh in dales, so why not unify how it writes to nc. idk
-   real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:),rtime(:)
+   real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:)
+   real(real32), allocatable  :: rtime(:)
    ! time loop variables
-   integer(int64) :: simtime = 0
-   integer :: current_chunk = 1
+   real,parameter :: tres = 0.001 !< to convert simtime to seconds simtime*tres
+   integer(int64) :: simtime = 0 !< simulation time in ms
+   real(real32) :: rsts = 0. !< real simulation time seconds
+   integer :: dt = 500 !< Delta Time in ms
+   integer(int64) :: maxtime
+   integer :: current_chunk = 0 !< from 0 to total_chunks, 0 means no fields have been read yet
+   real    :: next_chunk_load_time = -1. !< read immediatly please!
    integer :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
    !dimensions
    integer ::  imax, jmax, kmax, time_size
@@ -38,7 +43,15 @@ module modglobal
 
 contains
    subroutine init_global()
+      use config, only: runtime
       integer :: k
+
+      if (rtime(time_size)<runtime) then
+         runtime = int(rtime(time_size))
+         write(*,*) "selected runtime exceeded time span of provided data, setting runtime to: ", runtime, " s"
+      endif
+      maxtime = int(runtime/tres)
+
       i1 = imax +1
       j1 = jmax +1
       i2 = imax +2
@@ -85,11 +98,11 @@ contains
       end do
    end subroutine init_global
 
-   subroutine load_dimensions(filename)
+   subroutine load_dimensions()
       use netcdf
       use netcdf_loader, only :nchandle_error, get_dimension_size, get_1d_variable
+      use config, only: field_dump_path
 
-      character(len=*), intent(in) :: filename
       integer :: ncid, retval
 
       ! Dimension IDs and sizes
@@ -102,8 +115,8 @@ contains
       ! Static variable arrays (dynamic allocation)
 
       ! Open the NetCDF file
-      retval = nf90_open(filename, NF90_NOWRITE, ncid)
-      call nchandle_error(retval, 'Error opening file: '//trim(filename))
+      retval = nf90_open(field_dump_path, NF90_NOWRITE, ncid)
+      call nchandle_error(retval, 'Error opening file: '//trim(field_dump_path))
 
       ! Get dimension sizes for static variables
       call get_dimension_size(ncid, 'zt', zt_dim, zt_size)
@@ -135,9 +148,9 @@ contains
 
       ! Close the NetCDF file
       retval = nf90_close(ncid)
-      call nchandle_error(retval, 'Error closing file: '//trim(filename))
+      call nchandle_error(retval, 'Error closing file: '//trim(field_dump_path))
 
-      print *, 'Dimensions loaded successfully from: ', trim(filename)
+      print *, 'Dimensions loaded successfully from: ', trim(field_dump_path)
 
    end subroutine load_dimensions
 
