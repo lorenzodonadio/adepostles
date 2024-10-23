@@ -2,8 +2,10 @@ module modfields
    use iso_fortran_env
    implicit none
 
-   real(real32), allocatable :: rhobf(:)   !< density full level
-   real(real32), allocatable :: rhobh(:)   !< density half level
+   real(real32), allocatable :: rhobf_chunk(:,:)   !< density full level (zf,time)
+   real(real32), allocatable :: rhobh_chunk(:,:)   !< density half level (zh,time)
+   real(real32), allocatable :: rhobf(:)   !< density full level (zf)
+   real(real32), allocatable :: rhobh(:)   !< density half level (zh)
 
    real(real32), allocatable :: ekh(:,:,:,:) !< k-coefficient for eddy diffusivity ekh(xt,yt,zt,time) m2/s
    real(real32), allocatable :: u(:,:,:,:)   !< u(xm,yt,zt,time) m/s
@@ -33,8 +35,12 @@ module modfields
 contains
 
    subroutine allocate_fields()
+      !< Allocates and sets to zero, all fields and profiles
       use modglobal, only:i1,ih,j1,jh,k1
       use config, only: field_load_chunk_size
+
+      allocate(rhobf_chunk(k1,field_load_chunk_size))
+      allocate(rhobh_chunk(k1,field_load_chunk_size))
 
       allocate(rhobf(k1))
       allocate(rhobh(k1))
@@ -55,32 +61,44 @@ contains
       allocate(v0   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(w0   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
-      ! do we actually need these? I dont think so
-      ! allocate(ekhp (2-ih:i1+ih,2-jh:j1+jh,k1))
-      ! allocate(up   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      ! allocate(vp   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      ! allocate(wp   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      !Initially set them to zero
+      rhobf_chunk = 0.0
+      rhobh_chunk = 0.0
 
-      ! allocate(ekhm (2-ih:i1+ih,2-jh:j1+jh,k1))
-      ! allocate(um   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      ! allocate(vm   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      ! allocate(wm   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      rhobf = 0.0
+      rhobh = 0.0
+
+      ekh = 0.0
+      u = 0.0
+      v = 0.0
+      w = 0.0
+
+      c0 = 0.0
+      cp = 0.0
+      cm = 0.0
+
+      ekh0 = 0.0
+      u0 = 0.0
+      v0 = 0.0
+      w0 = 0.0
 
    end subroutine allocate_fields
 
-
    subroutine load_fields_chunk(filename, chunk_number)
+      !< Loads fields: u,v,w,ekh (3d+time) and vertical profiles rhobf & rhobh (1d+time) for the specific time specified by the chunk_number
       use modglobal, only:i1,j1,kmax
       use netcdf
-      use netcdf_loader, only :nchandle_error, get_and_read_variable_chunk
+      use netcdf_loader, only :nchandle_error, get_field_chunk,get_profile_chunk
       use modglobal,only: total_chunks
       character(len=*), intent(in) :: filename
       integer, intent(in) :: chunk_number
-      integer :: ncid, retval
+      integer :: ncid, retval, varid
 
-
-      ! Variable IDs for time-dependent variables
-      integer :: u_varid, v_varid, w_varid, ekh_varid
+      if (chunk_number > total_chunks .or. chunk_number < 1) then
+         write(*,*) 'Error loading chunks, invalid chunk number, exiting'
+         write(*,*) 'Chunk number: ',chunk_number, " - Total chunks: ", total_chunks
+         return
+      endif
 
       ! Time-dependent variable arrays (dynamic allocation)
 
@@ -91,8 +109,6 @@ contains
 
       ! Read time-dependent variables from the file
       ! kmax instead of k1 because of number of ghost cells
-      call get_and_read_variable_chunk(ncid, 'u', u_varid, u(2:i1,2:j1,2:kmax,:), chunk_number)
-
       ! For debuggind purposes,TODO implement a debug flag?
       ! print *, shape(u)
       ! print *, shape(u(2:i1,2:j1,2:kmax,:))
@@ -100,17 +116,80 @@ contains
       ! print *, u(5,5,:,1)
       ! print *, 'Horizontal U slice'
       ! print *, u(:,5,5,1)
-
-      call get_and_read_variable_chunk(ncid, 'v', v_varid, v(2:i1,2:j1,2:kmax,:), chunk_number)
-      call get_and_read_variable_chunk(ncid, 'w', w_varid, w(2:i1,2:j1,2:kmax,:), chunk_number)
-      call get_and_read_variable_chunk(ncid, 'ekh', ekh_varid, ekh(2:i1,2:j1,2:kmax,:), chunk_number)
+      ! Load fields
+      call get_field_chunk(ncid, 'u',   varid, u  (2:i1,2:j1,2:kmax,:), chunk_number)
+      call get_field_chunk(ncid, 'v',   varid, v  (2:i1,2:j1,2:kmax,:), chunk_number)
+      call get_field_chunk(ncid, 'w',   varid, w  (2:i1,2:j1,2:kmax,:), chunk_number)
+      call get_field_chunk(ncid, 'ekh', varid, ekh(2:i1,2:j1,2:kmax,:), chunk_number)
+      ! Load profiles
+      call get_profile_chunk(ncid, 'rhobh', varid, rhobh_chunk(2:kmax,:), chunk_number)
+      call get_profile_chunk(ncid, 'rhobf', varid, rhobf_chunk(2:kmax,:), chunk_number)
 
       ! Close the NetCDF file
       retval = nf90_close(ncid)
       call nchandle_error(retval, 'Error closing file: '//trim(filename))
 
       ! print *, 'Fields variables loaded successfully from ', trim(filename), 'for chunk: ', chunk_number,'/',total_chunks
-      print *, 'Fields loaded - chunk: ', chunk_number,'/',total_chunks
+      call pad_field(u)
+      call pad_field(v)
+      call pad_field(w)
+      call pad_field(ekh)
+      call pad_profile(rhobf_chunk)
+      call pad_profile(rhobh_chunk)
+
+      print *, 'Loaded fields chunk: ', chunk_number,'/',total_chunks
    end subroutine load_fields_chunk
 
+   subroutine pad_profile(p)
+      use modglobal,only:k1,kh,kmax,dzh
+      real(real32), intent(inout) :: p(:,:) !< some profile (z,time)
+      p(1:kh,:) = (1.+1./dzh(1))*p(1+kh:2*kh,:)-(1/dzh(1))*p(2+kh:1+2*kh,:)
+      p(k1-kh:k1,:) = (1.+1./dzh(kmax))*p(k1-2*kh:k1-kh,:) - (1/dzh(kmax))*p(kmax-2*kh:kmax-kh,:)
+   end subroutine pad_profile
+
+   subroutine pad_field(f)
+      !! fills ghost cells form fields, reconstructing boundary conditions
+      !! Options: 1. Periodic BC (default), 2. Neumann BC (copying points), 3. Second derivative to Zero (interpolation)
+      !! f: some 4d dimensional field (x,y,z,time)
+      use modglobal,only:i1,ih,j1,jh,k1,kh,imax, jmax, kmax,dzh,dxi,dyi
+      use config, only: lperiodic_field_pad
+      real(real32), intent(inout) :: f(:,:,:,:)
+      !! treat horizontal (X,y) boundaries
+      !! periodic bc
+      if (lperiodic_field_pad) then
+         !West from East
+         f(1:ih,:,:,:) = f(i1:imax+ih,:,:,:)
+         !East from west
+         f(i1+ih:imax+2*ih,:,:,:) = f(1+ih:2*ih,:,:,:)
+         !South form north
+         f(:,1:jh,:,:) = f(:,j1:jmax+jh,:,:)
+         !North from south
+         f(:,j1+jh:jmax+2*jh,:,:) = f(:,1+jh:2*jh,:,:)
+      else
+         !! lerp 2nd order aprox of derivative
+         !! X direction interp
+         !! f(-1) ~~ (1+1.5/dx)*f0-(2/dx)*f(1)+(1/2dx)*f(2)
+         f(ih,:,:,:) = (1+1.5*dxi)*f(ih+1,:,:,:) -2*dxi*f(ih+2,:,:,:)+0.5*dxi*f(ih+3,:,:,:)
+         f(ih-1,:,:,:) = (1+1.5*dxi)*f(ih,:,:,:) -2*dxi*f(ih+1,:,:,:)+0.5*dxi*f(ih+2,:,:,:)
+         !! f(1) ~~ (1+1.5/dx)*f0-(2/dx)*f(-1)+(1/2dx)*f(-2)
+         f(i1+ih,:,:,:) = (1+1.5*dxi)*f(i1+ih-1,:,:,:) -2*dxi*f(i1+ih-2,:,:,:)+0.5*dxi*f(i1+ih-3,:,:,:)
+         f(i1+ih+1,:,:,:) = (1+1.5*dxi)*f(i1+ih,:,:,:) -2*dxi*f(i1+ih-1,:,:,:)+0.5*dxi*f(i1+ih-2,:,:,:)
+         !! Y direction interp
+         f(:,jh,:,:) = (1+1.5*dyi)*f(:,jh+1,:,:) -2*dyi*f(:,jh+2,:,:)+0.5*dyi*f(:,jh+3,:,:)
+         f(:,jh-1,:,:) = (1+1.5*dyi)*f(:,jh,:,:) -2*dyi*f(:,jh+1,:,:)+0.5*dyi*f(:,jh+2,:,:)
+         !! f(1) ~~ (1+1.5/dx)*f0-(2/dx)*f(-1)+(1/2dx)*f(-2)
+         f(:,j1+jh,:,:) = (1+1.5*dyi)*f(:,j1+jh-1,:,:) -2*dyi*f(:,j1+jh-2,:,:)+0.5*dyi*f(:,j1+jh-3,:,:)
+         f(:,j1+jh+1,:,:) = (1+1.5*dyi)*f(:,j1+jh,:,:) -2*dyi*f(:,j1+jh-2,:,:)+0.5*dyi*f(:,j1+jh-2,:,:)
+      endif
+
+      !! Z field is always just extended (maybe better to lerp it?) yes
+      !! extend the fields
+      ! f(:,:,1:kh,:) = f(:,:,1+kh:2*kh,:)
+      ! f(:,:,k1-kh:k1,:) = f(:,:,k1-2*kh:k1-kh,:)
+      !! lerp
+      f(:,:,1:kh,:) = (1.+1./dzh(1))*f(:,:,1+kh:2*kh,:)-(1/dzh(1))*f(:,:,2+kh:1+2*kh,:)
+      f(:,:,k1-kh:k1,:) = (1.+1./dzh(kmax))*f(:,:,k1-2*kh:k1-kh,:) - (1/dzh(kmax))*f(:,:,kmax-2*kh:kmax-kh,:)
+
+
+   end subroutine pad_field
 end module modfields

@@ -8,11 +8,13 @@ module config
    integer, parameter :: ifnamopt = 40      ! Unit number for optional namelist files
 
    ! Configuration variables for &RUN namelist
+   logical :: ladaptivedt = .false.          ! Sensible default
+   logical :: lanisotrop = .true.
+   logical :: lperiodic_field_pad = .true.  !< if to use periodic BC for reconstructing the field ghost cells, if set to false it uses interpolation
+
    integer :: iexpnr = -1                    ! Default value indicates it must be specified
    integer :: runtime = 25                   ! Sensible default
    integer :: dtmax = 1                      ! Sensible default
-   logical :: ladaptivedt = .false.          ! Sensible default
-   logical :: lanisotrop = .true.
    integer :: integration_scheme = 1         ! Sensible default
    integer :: field_load_chunk_size = 100    ! Sensible default
    character(len=256) :: field_dump_path = ''  ! Must be specified
@@ -21,6 +23,7 @@ module config
    logical :: libm = .false.                 ! Sensible default
    character(len=256) :: ibm_input_file = ''   ! Must be specified
 
+   !other flags
 contains
 
    subroutine read_config_file()

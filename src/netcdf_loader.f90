@@ -19,7 +19,7 @@ contains
       call nchandle_error(retval, 'Error: Could not get dimension size for '//trim(dim_name))
    end subroutine get_dimension_size
 
-   subroutine get_and_read_variable(ncid, var_name, varid, var_data)
+   subroutine get_1d_variable(ncid, var_name, varid, var_data)
       integer, intent(in) :: ncid
       character(len=*), intent(in) :: var_name
       integer, intent(out) :: varid
@@ -30,25 +30,34 @@ contains
       retval = nf90_inq_varid(ncid, trim(var_name), varid)
       call nchandle_error(retval, 'Error: Could not get variable ID for '//trim(var_name))
 
-      ! retval = nf90_inquire_variable(ncid, varid, xtype=var_type)
-      ! call nchandle_error(retval, 'Error: Could not inquire variable type for '//trim(var_name))
-
-      ! ! Check the variable type and read the data based on the type
-      ! select case (var_type)
-      !  case (nf90_float)
-      !    print *, 'FLOAT'
-      !  case (nf90_double)
-      !    print *, 'DOUBLE'
-      !  case default
-      !    print *, "UNKNOWN", var_type
-      ! end select
-
       retval = nf90_get_var(ncid, varid, var_data)
       call nchandle_error(retval, 'Error: Could not read data for variable '//trim(var_name))
-      print *, 'READ: ', var_name
-   end subroutine get_and_read_variable
+   end subroutine get_1d_variable
 
-   subroutine get_and_read_variable_chunk(ncid, var_name, varid, var_data, chunk_number)
+   subroutine get_profile_chunk(ncid, var_name, varid, var_data, chunk_number)
+      use config, only: field_load_chunk_size
+
+      integer, intent(in) :: ncid, chunk_number
+      character(len=*), intent(in) :: var_name
+      integer, intent(out) :: varid
+      real(real32), intent(out) :: var_data(:,:)
+      integer :: retval
+      integer :: start(4)
+
+      ! For debugging purposes
+      ! call get_variable_dimensions(ncid,var_name)
+
+      retval = nf90_inq_varid(ncid, trim(var_name), varid)
+      call nchandle_error(retval, 'Error: Could not get variable ID for '//trim(var_name))
+      start = (/1, 1, 1, field_load_chunk_size*(chunk_number-1)+1 /)
+
+      ! write(*,*) 'Start', start
+      ! write(*,*) 'var_data shape', shape(var_data)
+
+      retval = nf90_get_var(ncid, varid, var_data, start = start)
+      call nchandle_error(retval, 'Error: Could not read data range for variable '//trim(var_name))
+   end subroutine get_profile_chunk
+   subroutine get_field_chunk(ncid, var_name, varid, var_data, chunk_number)
       use config, only: field_load_chunk_size
 
       integer, intent(in) :: ncid, chunk_number
@@ -70,7 +79,7 @@ contains
 
       retval = nf90_get_var(ncid, varid, var_data, start = start)
       call nchandle_error(retval, 'Error: Could not read data range for variable '//trim(var_name))
-   end subroutine get_and_read_variable_chunk
+   end subroutine get_field_chunk
 
    subroutine get_variable_dimensions(ncid, var_name)
       use iso_fortran_env, only: int32

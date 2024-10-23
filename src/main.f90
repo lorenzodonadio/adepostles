@@ -10,8 +10,9 @@ program adepostles
    ! Proceed with using the configuration variables as needed
    ! call do_test_nc(field_dump_path)
    call load_dimensions(field_dump_path)
-   call init_global() !this needs to run after loading the dimensions, maybe we put it inside the subroutine? but for now here to be explicit
+   call init_global !this needs to run after loading the dimensions, maybe we put it inside the subroutine? but for now here to be explicit
    call validate_time_size
    call allocate_fields
    call load_fields_chunk(field_dump_path,current_chunk)
+
 end program adepostles

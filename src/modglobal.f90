@@ -61,17 +61,23 @@ contains
       allocate(dzf(k1),dzh(k1),delta(k1),deltai(k1))
       ! zm = zf, zt = zh
       do  k=1,kmax-1
-         dzf(k) = zt(k+1) - zt(k)
+         dzf(k) = zm(k+1) - zm(k)
       end do
       dzf(kmax) = dzf(kmax-1) ! outofbounds error if not
       dzf(k1) = dzf(kmax)
 
-      dzh(1) = 2*zm(1)
+      dzh(1) = 2*zt(1)
       do k=2,kmax
-         dzh(k) = zm(k) - zm(k-1)
+         dzh(k) = zt(k) - zt(k-1)
       end do
 
       dzh(k1) = dzh(kmax) !avoid outofbounds error
+      ! dzh(1) = 2*zm(1)
+      ! do k=2,kmax
+      !    dzh(k) = zm(k) - zm(k-1)
+      ! end do
+
+      ! dzh(k1) = dzh(kmax) !avoid outofbounds error
 
       do k=1,k1
          delta(k) = (dx*dy*dzf(k))**(1./3.)
@@ -81,7 +87,7 @@ contains
 
    subroutine load_dimensions(filename)
       use netcdf
-      use netcdf_loader, only :nchandle_error, get_dimension_size, get_and_read_variable
+      use netcdf_loader, only :nchandle_error, get_dimension_size, get_1d_variable
 
       character(len=*), intent(in) :: filename
       integer :: ncid, retval
@@ -119,13 +125,13 @@ contains
       allocate(zt(zt_size), zm(zm_size), xt(xt_size), xm(xm_size), yt(yt_size), ym(ym_size),rtime(time_size))
       ! Debug output to verify allocation
       ! Read static variables from the file
-      call get_and_read_variable(ncid, 'zt', zt_varid, zt)
-      call get_and_read_variable(ncid, 'zm', zm_varid, zm)
-      call get_and_read_variable(ncid, 'xt', xt_varid, xt)
-      call get_and_read_variable(ncid, 'xm', xm_varid, xm)
-      call get_and_read_variable(ncid, 'yt', yt_varid, yt)
-      call get_and_read_variable(ncid, 'ym', ym_varid, ym)
-      call get_and_read_variable(ncid, 'time', time_varid, rtime)
+      call get_1d_variable(ncid, 'zt', zt_varid, zt)
+      call get_1d_variable(ncid, 'zm', zm_varid, zm)
+      call get_1d_variable(ncid, 'xt', xt_varid, xt)
+      call get_1d_variable(ncid, 'xm', xm_varid, xm)
+      call get_1d_variable(ncid, 'yt', yt_varid, yt)
+      call get_1d_variable(ncid, 'ym', ym_varid, ym)
+      call get_1d_variable(ncid, 'time', time_varid, rtime)
 
       ! Close the NetCDF file
       retval = nf90_close(ncid)
