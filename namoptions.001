@@ -1,7 +1,7 @@
 &RUN
 iexpnr     =  001
-runtime    =  35
-dtmax      =  1
+runtime    =  1
+dtmax      =  0.3
 ladaptivedt  =  .true.
 lanisotrop = .true.
 integration_scheme = 1

@@ -203,5 +203,6 @@ contains
             end do
          end if
       end do
+
    end subroutine advecc_kappa
 end module advec_kappa

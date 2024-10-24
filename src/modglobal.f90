@@ -9,7 +9,7 @@ module modglobal
    real,parameter :: tres = 0.001 !< to convert simtime to seconds simtime*tres
    integer(int64) :: simtime = 0 !< simulation time in ms
    real(real32) :: rsts = 0. !< real simulation time seconds
-   integer :: dt = 500 !< Delta Time in ms
+   integer :: dt = 50 !< Delta Time in ms
    integer(int64) :: maxtime
    integer :: current_chunk = 0 !< from 0 to total_chunks, 0 means no fields have been read yet
    real    :: next_chunk_load_time = -1. !< read immediatly please!
@@ -43,7 +43,7 @@ module modglobal
 
 contains
    subroutine init_global()
-      use config, only: runtime
+      use config, only: runtime,dtmax
       integer :: k
 
       if (rtime(time_size)<runtime) then
@@ -51,6 +51,8 @@ contains
          write(*,*) "selected runtime exceeded time span of provided data, setting runtime to: ", runtime, " s"
       endif
       maxtime = int(runtime/tres)
+
+      dt = min(int(dtmax/tres),dt) !dtmax comes from namoptions and its in seconds
 
       i1 = imax +1
       j1 = jmax +1
@@ -61,9 +63,10 @@ contains
 
       dx = xm(2)-xm(1)
       dy = ym(2)-ym(1)
+      dxi = 1./dx
+      dyi = 1./dy
 
-      dxi = 1/dx
-      dyi = 1/dy
+      write(*,*) "dx,dy,dxi,dyi", dx,dy,dxi,dyi
 
       dxi5 = 0.5*dxi
       dyi5 = 0.5*dyi

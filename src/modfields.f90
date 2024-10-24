@@ -133,6 +133,11 @@ contains
       allocate(vp   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(wp   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
+      c0 = 0.
+      cp = 0.
+      cm = 0.
+
+      c0(10:12,10:12,1:3) = 5.
    end subroutine allocate_fields
 
    subroutine init_interp_fields()
