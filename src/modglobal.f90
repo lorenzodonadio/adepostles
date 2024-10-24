@@ -21,12 +21,13 @@ module modglobal
    integer :: jh = 2
    integer :: kh = 1
 
+   logical :: luniformz = .false.
    real :: dx              !<  grid spacing in x-direction
    real :: dy              !<  grid spacing in y-direction
-   ! real :: dz              !<  grid spacing in z-direction
+   real :: dz              !<  grid spacing in z-direction
    real :: dxi             !<  1/dx
    real :: dyi             !<  1/dy
-   ! real :: dzi             !<  1/dz
+   real :: dzi             !<  1/dz
    ! real :: dxiq            !<  1/(dx*4)
    ! real :: dyiq            !<  1/(dy*4)
    ! real :: dziq            !<  1/(dz*4)
@@ -35,7 +36,7 @@ module modglobal
    ! real :: dzi5            !<  1/(2*dz)
    real :: dx2i            !<  (1/dx)**2
    real :: dy2i            !<  (1/dy)**2
-
+   real :: dz2i      !< (1/dz)**2
    real, allocatable :: dzf(:)         !<  thickness of full level
    real, allocatable :: dzh(:)         !<  thickness of half level
    real, allocatable :: delta(:)       !<  (dx*dy*dz)**(1/3)
@@ -75,6 +76,7 @@ contains
       dy2i = dyi**2
 
       allocate(dzf(k1),dzh(k1),delta(k1),deltai(k1))
+
       ! zm = zf, zt = zh
       do  k=1,kmax-1
          dzf(k) = zm(k+1) - zm(k)
@@ -88,6 +90,16 @@ contains
       end do
 
       dzh(k1) = dzh(kmax) !avoid outofbounds error
+
+      luniformz = all(dzh .eq. dzh(1))
+
+      if (luniformz) then
+         dz = dzh(1)
+         dzi = 1./dz
+         dz2i = dzi**2
+
+         write(*,*) 'Working with uniform z grid:'
+      endif
       ! dzh(1) = 2*zm(1)
       ! do k=2,kmax
       !    dzh(k) = zm(k) - zm(k-1)
