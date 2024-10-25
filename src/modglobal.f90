@@ -115,7 +115,7 @@ contains
 
    subroutine load_dimensions()
       use netcdf
-      use netcdf_loader, only :nchandle_error, get_dimension_size, get_1d_variable
+      use netcdf_utils, only :nchandle_error, get_dimension_size, get_1d_variable
       use config, only: field_dump_path
 
       integer :: ncid, retval

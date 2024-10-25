@@ -11,11 +11,10 @@ module config
    logical :: ladaptivedt = .false.          ! Sensible default
    logical :: lanisotrop = .true.
    logical :: lperiodic_field_pad = .true.  !< if to use periodic BC for reconstructing the field ghost cells, if set to false it uses interpolation
-
+   integer :: rkmethod = 1                   !< 1. euler, 2.heun, 3.rk3, 4. rk4
    integer :: iexpnr = -1                    ! Default value indicates it must be specified
    integer :: runtime = 25                   !< seconds
    real :: dtmax = 1.                      !< seconds
-   integer :: integration_scheme = 1         !< 1. euler, 2.heun, 3.rk3, 4. rk4, (only 1 supported so far)
    integer :: field_load_chunk_size = 100    ! Sensible default
    character(len=256) :: field_dump_path = ''  ! Must be specified
 
@@ -30,7 +29,7 @@ contains
       character(len=256) :: config_filename
       integer :: ios
       ! Namelists for the configuration
-      namelist /RUN/ iexpnr, runtime, dtmax, ladaptivedt,lanisotrop, integration_scheme, field_load_chunk_size, field_dump_path
+      namelist /RUN/ iexpnr, runtime, dtmax,rkmethod, ladaptivedt,lanisotrop, field_load_chunk_size, field_dump_path
       namelist /IBM/ libm, ibm_input_file
 
 
@@ -88,12 +87,16 @@ contains
          stop 'Execution halted due to missing ibm_input_file.'
       end if
 
+      if (rkmethod > 4 .or. rkmethod < 1) then
+         write(*,*) 'Parameter rkmethod not supported: only 1 = euler, 2 = heun, 3 = rk3, 4 = rk4'
+         stop 'Execution halted due to wrong rkmethod'
+      end if
       write(*,*) 'Configuration loaded successfully:'
       write(*,*) 'iexpnr:', iexpnr
       write(*,*) 'runtime:', runtime
       write(*,*) 'dtmax:', dtmax
       write(*,*) 'ladaptivedt:', ladaptivedt
-      write(*,*) 'integration_scheme:', integration_scheme
+      write(*,*) 'rkmethod:', rkmethod
       write(*,*) 'field_load_chunk_size:', field_load_chunk_size
       write(*,*) 'field_dump_path:', trim(field_dump_path)
       write(*,*) 'libm:', libm

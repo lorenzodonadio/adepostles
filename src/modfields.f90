@@ -35,6 +35,8 @@ module modfields
    real(real32), allocatable :: um(:,:,:)   !< u at time t-1m/s
    real(real32), allocatable :: vm(:,:,:)   !< v at time t-1 m/s
    real(real32), allocatable :: wm(:,:,:)   !< w at time t-1m/s
+   !! optinally allocatable only for rk4
+   real(real32), allocatable :: rk4_acc(:,:,:)
 
 
 contains
@@ -97,7 +99,7 @@ contains
    subroutine allocate_fields()
       !< Allocates and sets to zero, all fields and profiles
       use modglobal, only:i1,ih,j1,jh,k1
-      use config, only: field_load_chunk_size
+      use config, only: field_load_chunk_size,rkmethod
 
       allocate(chunktime(field_load_chunk_size))
 
@@ -117,6 +119,8 @@ contains
       allocate(c0   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(cp   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(cm   (2-ih:i1+ih,2-jh:j1+jh,k1))
+
+      if (rkmethod == 4) allocate(rk4_acc(2-ih:i1+ih,2-jh:j1+jh,k1))
 
       allocate(ekh0 (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(u0   (2-ih:i1+ih,2-jh:j1+jh,k1))
@@ -178,7 +182,7 @@ contains
       !< Loads fields: u,v,w,ekh (3d+time) and vertical profiles rhobf & rhobh (1d+time) for the specific time specified by the chunk_number
       use netcdf
       use modglobal, only:i1,j1,kmax
-      use netcdf_loader, only :nchandle_error, get_field_chunk,get_profile_chunk
+      use netcdf_utils, only :nchandle_error, get_field_chunk,get_profile_chunk
       use modglobal,only: total_chunks
       character(len=*), intent(in) :: filename
       integer, intent(in) :: chunk_number

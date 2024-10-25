@@ -1,4 +1,4 @@
-module netcdf_loader
+module netcdf_utils
    use netcdf
    use iso_fortran_env, only: real32
    implicit none
@@ -123,4 +123,4 @@ contains
 
 
 
-end module netcdf_loader
+end module netcdf_utils
