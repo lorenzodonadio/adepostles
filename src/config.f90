@@ -15,8 +15,10 @@ module config
    integer :: iexpnr = -1                    ! Default value indicates it must be specified
    integer :: runtime = 25                   !< seconds
    real :: dtmax = 1.                      !< seconds
+   real :: output_save_interval = 20. !< how many seconds between save of concentration output
    integer :: field_load_chunk_size = 100    ! Sensible default
    character(len=256) :: field_dump_path = ''  ! Must be specified
+   character(len=256) :: outputfile_path = 'concentration_out.nc'  ! Must be specified
 
    ! Configuration variables for &IBM namelist
    logical :: libm = .false.                 ! Sensible default
@@ -29,7 +31,8 @@ contains
       character(len=256) :: config_filename
       integer :: ios
       ! Namelists for the configuration
-      namelist /RUN/ iexpnr, runtime, dtmax,rkmethod, ladaptivedt,lanisotrop, field_load_chunk_size, field_dump_path
+      namelist /RUN/ iexpnr, runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
+         field_load_chunk_size, field_dump_path
       namelist /IBM/ libm, ibm_input_file
 
 

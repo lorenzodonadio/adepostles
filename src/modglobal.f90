@@ -1,7 +1,6 @@
 module modglobal
    use, intrinsic :: iso_fortran_env
    implicit none
-
    ! dimensions zm = zf, zt = zh in dales, so why not unify how it writes to nc. idk
    real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:)
    real(real32), allocatable  :: rtime(:)
@@ -14,6 +13,8 @@ module modglobal
    integer :: current_chunk = 0 !< from 0 to total_chunks, 0 means no fields have been read yet
    real    :: next_chunk_load_time = -1. !< read immediatly please!
    integer :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
+   real(real32) :: next_save !<time for the next save
+
    !dimensions
    integer ::  imax, jmax, kmax, time_size
    integer ::  i1,i2,j1,j2,k1
@@ -44,7 +45,7 @@ module modglobal
 
 contains
    subroutine init_global()
-      use config, only: runtime,dtmax
+      use config, only: runtime,dtmax,output_save_interval
       integer :: k
 
       if (rtime(time_size)<runtime) then
@@ -54,6 +55,8 @@ contains
       maxtime = int(runtime/tres)
 
       dt = min(int(dtmax/tres),dt) !dtmax comes from namoptions and its in seconds
+
+      next_save = output_save_interval
 
       i1 = imax +1
       j1 = jmax +1
@@ -114,9 +117,9 @@ contains
    end subroutine init_global
 
    subroutine load_dimensions()
-      use netcdf
       use netcdf_utils, only :nchandle_error, get_dimension_size, get_1d_variable
       use config, only: field_dump_path
+      use netcdf
 
       integer :: ncid, retval
 

@@ -6,7 +6,7 @@ contains
    subroutine time_step()
       use config, only: ladaptivedt,rkmethod
       use modglobal, only: simtime, dt, tres, rsts
-
+      use modfields, only:  c0
       ! Check if we need adaptive timestep (only at start of RK steps)
       if (rkstep == 1 .and. ladaptivedt) call adaptative_dt
 
@@ -23,6 +23,10 @@ contains
 
       ! Update time only after completing all substeps
       if (rkstep == 1) then
+         ! Optional: Add positivity preservation
+         where (c0 < 0.0)
+            c0 = 0.0
+         end where
          simtime = simtime + dt     ! microseconds
          rsts = real(simtime)*tres  ! seconds
       endif
@@ -47,12 +51,12 @@ contains
          ! First step: Store initial state in cm and update c0
          cm = c0  ! Store initial state
          c0 = c0 + dt*tres*cp
-         cp = 0.
+         ! cp = 0.
          rkstep = 2
 
        case(2)
          ! Second step: Complete RK2 update using cm as initial state
-         c0 = cm + 0.5*dt*tres*(cp + cp)  ! cp here contains k2
+         c0 = cm + dt*tres*cp ! cp here contains k2
          cp = 0.
          rkstep = 1
       end select
@@ -61,22 +65,26 @@ contains
    subroutine rk3_step()
       use modfields, only: cm, c0, cp
       use modglobal, only: dt, tres
-      real :: rk3coef
-
-      rk3coef = dt*tres/(4. - real(rkstep))
-
-      if (rkstep /= 3) then
-         ! Steps 1 and 2
-         c0 = cm + rk3coef * cp
+      select case(rkstep)
+       case(1)
+         ! First stage
+         cm = c0            ! Store initial state
+         c0 = c0 + dt*tres*cp
          cp = 0.
-         rkstep = rkstep + 1
-      else
-         ! Step 3 - store result in both c0 and cm
-         cm = cm + rk3coef * cp
-         c0 = cm
+         rkstep = 2
+
+       case(2)
+         ! Second stage using SSP RK3 coefficients
+         c0 = 0.75*cm + 0.25*(c0 + dt*tres*cp)
+         cp = 0.
+         rkstep = 3
+
+       case(3)
+         ! Third stage
+         c0 = 0.33333333*cm + 0.66666667*(c0 + dt*tres*cp)
          cp = 0.
          rkstep = 1
-      endif
+      end select
    end subroutine rk3_step
 
    subroutine rk4_step()
@@ -126,16 +134,18 @@ contains
       ! Set stability limits based on RK method
       select case(rkmethod)
        case(1)  ! RK1
-         cfl_limit = 1.0
+         ! cfl_limit = 1.0
+         cfl_limit = 0.8
          vn_limit = 0.5
        case(2)  ! RK2
-         cfl_limit = 1.0
+         cfl_limit = 0.9
          vn_limit = 1.0
        case(3)  ! RK3
+         cfl_limit = 1.5
          cfl_limit = 1.73  ! sqrt(3) and a bit less
          vn_limit = 1.36
        case(4)  ! RK4
-         cfl_limit = 2.82  ! sqrt(8) and a bit less
+         cfl_limit = 2.  ! sqrt(8) and a bit less
          vn_limit = 2.78
       end select
 
@@ -158,6 +168,6 @@ contains
          dt = int(0.95*maxdt)
       endif
 
-      write (*,*) "cfl: ", cfl, "vnm: ", vnm , "New dt: ", dt*tres , 's'
+      ! write (*,*) "cfl: ", cfl, "vnm: ", vnm , "New dt: ", dt*tres , 's'
    end subroutine adaptative_dt
 end module time_integrate

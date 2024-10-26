@@ -1,12 +1,13 @@
 &RUN
 iexpnr     =  001
-runtime    =  10
+runtime    =  400
 dtmax      =  2
 ladaptivedt  =  .true.
 lanisotrop = .true.
-rkmethod = 4
-field_load_chunk_size = 10
+rkmethod = 1
+field_load_chunk_size = 5
 field_dump_path = "/mnt/c/Users/loren/Desktop/phdmdr/utrecht_result_data/utrecht_ideal_save/completefielddump.nc"
+output_save_interval = 1
 /
 &IBM
 libm = .true.

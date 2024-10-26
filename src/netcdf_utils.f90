@@ -3,7 +3,20 @@ module netcdf_utils
    use iso_fortran_env, only: real32
    implicit none
 
+   integer :: output_ncid
 contains
+   subroutine nchandle_error(status, error_message)
+      integer, intent(in) :: status
+      character(len=*), optional, intent(in) :: error_message
+
+      if (status /= nf90_noerr) then
+         write(*,*) trim(nf90_strerror(status))
+         if (present(error_message)) then
+            write(*,*) error_message
+         end if
+         stop 'Execution stopped due to NetCDF error.'
+      end if
+   end subroutine nchandle_error
 
    subroutine get_dimension_size(ncid, dim_name, dimid, dim_size)
       integer, intent(in) :: ncid
@@ -106,21 +119,90 @@ contains
       end do
    end subroutine get_variable_dimensions
 
+   !!!-------------- WRITING CONCENTRATION ------------
 
-   subroutine nchandle_error(status, error_message)
-      integer, intent(in) :: status
-      character(len=*), optional, intent(in) :: error_message
+   subroutine create_concentration_file_nc(ncid,filename,x,y,z)
+      integer, intent(out) :: ncid
+      character(len=256), intent(in) :: filename
+      real, intent(in) :: x(:),y(:),z(:)
+      integer :: retval, time_dim, x_dim, y_dim, z_dim, varid,xid,yid,zid
 
-      if (status /= nf90_noerr) then
-         write(*,*) trim(nf90_strerror(status))
-         if (present(error_message)) then
-            write(*,*) error_message
-         end if
-         stop 'Execution stopped due to NetCDF error.'
-      end if
-   end subroutine nchandle_error
+      ! Create the NetCDF file
+      retval = nf90_create(trim(filename), nf90_clobber, ncid)
+      call nchandle_error(retval, 'Error: Could not create NetCDF file '//trim(filename))
 
+      ! Define dimensions
 
+      retval = nf90_def_dim(ncid, "x", size(x), x_dim)
+      call nchandle_error(retval, 'Error: Could not define x dimension')
 
+      retval = nf90_def_dim(ncid, "y", size(y), y_dim)
+      call nchandle_error(retval, 'Error: Could not define y dimension')
+
+      retval = nf90_def_dim(ncid, "z", size(z), z_dim)
+      call nchandle_error(retval, 'Error: Could not define z dimension')
+
+      retval = nf90_def_dim(ncid, "time", nf90_unlimited, time_dim)
+      call nchandle_error(retval, 'Error: Could not define time dimension')
+
+      !define actual variables containing the values of the dimensions since they might not be unifornmly distributed
+      retval = nf90_def_var(ncid, "x", nf90_real, x_dim , xid)
+      call nchandle_error(retval, 'Error: Could not define variable x')
+      retval = nf90_def_var(ncid, "y", nf90_real, y_dim , yid)
+      call nchandle_error(retval, 'Error: Could not define variable y')
+      retval = nf90_def_var(ncid, "z", nf90_real, z_dim , zid)
+      call nchandle_error(retval, 'Error: Could not define variable z')
+      retval = nf90_def_var(ncid, "time", nf90_real, time_dim , varid)
+      call nchandle_error(retval, 'Error: Could not define variable time')
+      ! Define the variable with dimensions, concentration only for now: c(x, y, z,time)
+      retval = nf90_def_var(ncid, "c", nf90_real, (/x_dim, y_dim, z_dim, time_dim/) , varid)
+      call nchandle_error(retval, 'Error: Could not define variable c')
+
+      ! End definition mode
+      retval = nf90_enddef(ncid)
+      call nchandle_error(retval, 'Error: Could not end definition mode in NetCDF file')
+
+      ! Write x, y, and z to the corresponding variables x, y, z
+      retval = nf90_put_var(ncid, xid, x)
+      call nchandle_error(retval, 'Error: Could not write values to variable x')
+      retval = nf90_put_var(ncid, yid, y)
+      call nchandle_error(retval, 'Error: Could not write values to variable y')
+      retval = nf90_put_var(ncid, zid, z)
+      call nchandle_error(retval, 'Error: Could not write values to variable z')
+
+   end subroutine create_concentration_file_nc
+
+   subroutine write_concentration_nc(ncid,c,rsts)
+      ! use modglobal, only: rsts  ! real simulation time in seconds
+      ! use modfields, only: c0    ! 3D field to be written
+      integer, intent(in) :: ncid
+      real, intent(in) :: rsts
+      real, intent(in) :: c(:,:,:)
+      integer :: retval, time_size, varid, time_dimid
+      integer :: start(4)
+      character(len=72) :: varname
+      ! Get the dimension ID for "time"
+      retval = nf90_inq_dimid(ncid, "time", time_dimid)
+      call nchandle_error(retval, 'Error: Could not get dimension ID for time')
+
+      ! Get the current size of the "time" dimension to determine the next index
+      retval = nf90_inquire_dimension(ncid, time_dimid, varname, len=time_size)
+      call nchandle_error(retval, 'Error: Could not get the current size of time dimension')
+      ! Write concentration field c0 at the current time index
+      start = (/1, 1, 1, time_size + 1/)
+      ! start = (/0, 0, 0, time_size/)
+      retval = nf90_inq_varid(ncid, 'c', varid)
+      call nchandle_error(retval, 'Error: Could not get variable ID for c')
+
+      retval = nf90_put_var(ncid, varid, c, start = start)
+      call nchandle_error(retval, 'Error: Could not write variable c0')
+
+      ! Write the current time step to the time variable
+      retval = nf90_inq_varid(ncid, 'time', varid)
+      call nchandle_error(retval, 'Error: Could not get variable ID for time')
+
+      retval = nf90_put_var(ncid, varid, rsts, start = (/time_size + 1/))
+      call nchandle_error(retval, 'Error: Could not write time step to variable time')
+   end subroutine write_concentration_nc
 
 end module netcdf_utils

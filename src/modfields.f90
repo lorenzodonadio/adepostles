@@ -2,6 +2,7 @@ module modfields
    use iso_fortran_env
    implicit none
 
+   integer :: output_ncid !< where to write the output concentration
    integer :: nti = 0 !< next time index, index of closest fields measurement in future time
    real :: dtfield !< delta t between the two currecly active fields
    !this makes life easier
@@ -141,7 +142,7 @@ contains
       cp = 0.
       cm = 0.
 
-      c0(10:12,10:12,1:3) = 5.
+      c0(68:70,68:70,3:4) = 5.
    end subroutine allocate_fields
 
    subroutine init_interp_fields()
@@ -285,6 +286,44 @@ contains
       f(:,:,k1-kh:k1,:) = (1.+1./dzh(kmax))*f(:,:,k1-2*kh:k1-kh,:) - (1/dzh(kmax))*f(:,:,kmax-2*kh:kmax-kh,:)
 
    end subroutine pad_field
+
+   subroutine init_concentration_output_nc()
+      use modglobal, only: xt,yt,zt
+      use config, only: outputfile_path
+      use netcdf_utils, only: create_concentration_file_nc
+
+      call create_concentration_file_nc(output_ncid,outputfile_path,xt,yt,zt)
+   end subroutine init_concentration_output_nc
+
+   subroutine write_concentration_timeloop()
+      use modglobal, only: rsts,next_save,i1,j1,kmax
+      use config, only: output_save_interval
+      use netcdf_utils, only: write_concentration_nc
+
+      if (rsts>=next_save) then
+         call write_concentration_nc(output_ncid, c0(2:i1,2:j1,1:kmax), rsts)
+         next_save = next_save + output_save_interval
+
+         write (*,*) "Saved concentration Field at: ", rsts
+         write(*,*)  "Max value:", maxval(abs(c0))
+         write(*,*)  "Min value:", minval(c0)
+         if (maxval(abs(c0)) > 1e4) then
+            call close_concentration_nc
+            stop "VALUE EXCEEDED 1e4"
+         endif
+      endif
+
+   end subroutine write_concentration_timeloop
+
+   subroutine close_concentration_nc()
+      use netcdf
+      use netcdf_utils, only: nchandle_error
+      integer :: retval
+      ! Close the NetCDF file
+      retval = nf90_close(output_ncid)
+      call nchandle_error(retval, 'Error: Could not close the NetCDF file')
+
+   end subroutine close_concentration_nc
 
 
 end module modfields
