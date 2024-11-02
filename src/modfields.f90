@@ -142,7 +142,9 @@ contains
       cp = 0.
       cm = 0.
 
-      c0(68:70,68:70,3:4) = 5.
+      ! c0(10:12,20:22,3:5) = 5.
+      ! c0(40:44,70:72,3:5) = 5.
+      c0(10:12,5:100,2:3) = 5.
    end subroutine allocate_fields
 
    subroutine init_interp_fields()
@@ -307,9 +309,9 @@ contains
          write (*,*) "Saved concentration Field at: ", rsts
          write(*,*)  "Max value:", maxval(abs(c0))
          write(*,*)  "Min value:", minval(c0)
-         if (maxval(abs(c0)) > 1e4) then
+         if (maxval(abs(c0)) > 1e3) then
             call close_concentration_nc
-            stop "VALUE EXCEEDED 1e4"
+            stop "CONCENTRTION VALUE EXCEEDED 1e3"
          endif
       endif
 

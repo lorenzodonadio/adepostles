@@ -1,6 +1,6 @@
 &RUN
 iexpnr     =  001
-runtime    =  400
+runtime    =  40
 dtmax      =  2
 ladaptivedt  =  .true.
 lanisotrop = .true.
@@ -10,6 +10,6 @@ field_dump_path = "/mnt/c/Users/loren/Desktop/phdmdr/utrecht_result_data/utrecht
 output_save_interval = 1
 /
 &IBM
-libm = .true.
-ibm_input_file = "somefile.inp"
+lapplyibm = .true.
+ibm_input_file = "/mnt/c/Users/loren/Desktop/phdmdr/utrecht_result_data/utrecht_ideal_save/ibm.inp.001"
 /

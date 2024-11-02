@@ -3,7 +3,7 @@ module config
 
    ! < File unit numbers
    integer, parameter :: ifconfig = 10      ! Unit number for the configuration file
-   integer, parameter :: ifinput  = 20      ! Unit number for input file
+   integer, parameter :: ifinputibm  = 20      ! Unit number for input file
    integer, parameter :: ifoutput = 30      ! Unit number for output file
    integer, parameter :: ifnamopt = 40      ! Unit number for optional namelist files
 
@@ -21,7 +21,7 @@ module config
    character(len=256) :: outputfile_path = 'concentration_out.nc'  ! Must be specified
 
    ! Configuration variables for &IBM namelist
-   logical :: libm = .false.                 ! Sensible default
+   logical :: lapplyibm = .false.                 ! Sensible default
    character(len=256) :: ibm_input_file = ''   ! Must be specified
 
    !other flags
@@ -33,7 +33,7 @@ contains
       ! Namelists for the configuration
       namelist /RUN/ iexpnr, runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
          field_load_chunk_size, field_dump_path
-      namelist /IBM/ libm, ibm_input_file
+      namelist /IBM/ lapplyibm, ibm_input_file
 
 
       if (command_argument_count() >=1) then
@@ -85,7 +85,7 @@ contains
       end if
 
       ! Validate &IBM namelist parameters
-      if (libm .and. trim(ibm_input_file) == '') then
+      if (lapplyibm .and. trim(ibm_input_file) == '') then
          write(*,*) 'Error: Parameter ibm_input_file is required in the &IBM namelist but was not provided.'
          stop 'Execution halted due to missing ibm_input_file.'
       end if
@@ -102,7 +102,7 @@ contains
       write(*,*) 'rkmethod:', rkmethod
       write(*,*) 'field_load_chunk_size:', field_load_chunk_size
       write(*,*) 'field_dump_path:', trim(field_dump_path)
-      write(*,*) 'libm:', libm
+      write(*,*) 'lapplyibm:', lapplyibm
       write(*,*) 'ibm_input_file:', trim(ibm_input_file)
    end subroutine validate_parameters
 

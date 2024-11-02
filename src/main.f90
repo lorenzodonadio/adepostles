@@ -6,6 +6,8 @@ program adepostles
    use time_integrate, only: time_step
    use advec_kappa, only: advecc_kappa
    use moddiff,only: init_diff,diffc
+   use modboundary, only: apply_bc
+   use modibm, only : init_ibm,apply_ibm
    implicit none
 
    ! Read the configuration from the namelist file
@@ -19,7 +21,9 @@ program adepostles
    call allocate_fields
    call init_interp_fields
    call init_diff
+   call init_ibm
    call init_concentration_output_nc
+
    do while (simtime < maxtime)
 
       call write_concentration_timeloop
@@ -30,7 +34,8 @@ program adepostles
       call advecc_kappa(c0,cp)
 
       call time_step
-
+      call apply_bc
+      call apply_ibm
    end do
 
 
