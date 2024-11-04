@@ -144,7 +144,8 @@ contains
 
       ! c0(10:12,20:22,3:5) = 5.
       ! c0(40:44,70:72,3:5) = 5.
-      c0(10:12,5:100,2:3) = 5.
+      ! c0(10:12,5:100,2:3) = 5.
+      ! c0(50:52,60:100,3:4) = 5.
    end subroutine allocate_fields
 
    subroutine init_interp_fields()

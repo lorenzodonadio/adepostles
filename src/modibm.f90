@@ -152,7 +152,7 @@ contains
          endif
       end do
 
-      do k=2,kmax
+      do k=1,kmax
          do j=2,j1
             do i=2,i1
                if (libm(i,j,k)) c0(i,j,k) = 0.

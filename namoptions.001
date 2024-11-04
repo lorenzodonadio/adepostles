@@ -1,15 +1,15 @@
 &RUN
 iexpnr     =  001
-runtime    =  40
+runtime    =  1000
 dtmax      =  2
 ladaptivedt  =  .true.
 lanisotrop = .true.
-rkmethod = 1
-field_load_chunk_size = 5
-field_dump_path = "/mnt/c/Users/loren/Desktop/phdmdr/utrecht_result_data/utrecht_ideal_save/completefielddump.nc"
+rkmethod = 2
+field_load_chunk_size = 10
+field_dump_path = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/utrecht_ideal_save/completefielddump.nc"
 output_save_interval = 1
 /
 &IBM
 lapplyibm = .true.
-ibm_input_file = "/mnt/c/Users/loren/Desktop/phdmdr/utrecht_result_data/utrecht_ideal_save/ibm.inp.001"
+ibm_input_file = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/utrecht_ideal_save/ibm.inp.001"
 /

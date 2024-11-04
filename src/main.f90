@@ -6,7 +6,7 @@ program adepostles
    use time_integrate, only: time_step
    use advec_kappa, only: advecc_kappa
    use moddiff,only: init_diff,diffc
-   use modboundary, only: apply_bc
+   use modboundary, only: apply_bc,apply_source
    use modibm, only : init_ibm,apply_ibm
    implicit none
 
@@ -35,7 +35,9 @@ program adepostles
 
       call time_step
       call apply_bc
+      call apply_source
       call apply_ibm
+
    end do
 
 
