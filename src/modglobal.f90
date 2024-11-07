@@ -3,25 +3,27 @@ module modglobal
    implicit none
    ! dimensions zm = zf, zt = zh in dales, so why not unify how it writes to nc. idk
    real(real32), allocatable :: zt(:), zm(:), xt(:), xm(:), yt(:), ym(:)
-   real(real32), allocatable  :: rtime(:)
+   real(real32), allocatable :: rtime(:)
    ! time loop variables
    real,parameter :: tres = 0.001 !< to convert simtime to seconds simtime*tres
    integer(int64) :: simtime = 0 !< simulation time in ms
-   real(real32) :: rsts = 0. !< real simulation time seconds
-   integer :: dt = 50 !< Delta Time in ms
    integer(int64) :: maxtime
-   integer :: current_chunk = 0 !< from 0 to total_chunks, 0 means no fields have been read yet
-   real    :: next_chunk_load_time = -1. !< read immediatly please!
-   integer :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
-   real(real32) :: next_save !<time for the next save
+   integer        :: dt = 50 !< Delta Time in ms
+   integer        :: current_chunk = 0 !< from 0 to total_chunks, 0 means no fields have been read yet
+   integer        :: total_chunks !< calculated as time_size/field_load_chunk_size, must be int otherwise program stops
+   real(real32)   :: rsts = 0. !< real simulation time seconds
+   real(real32)   :: next_chunk_load_time = -1. !< read immediatly please!
+   real(real32)   :: next_save !<time for the next save
 
    !dimensions
    integer ::  imax, jmax, kmax, time_size
    integer ::  i1,i2,j1,j2,k1
-   integer :: ih = 2
-   integer :: jh = 2
-   integer :: kh = 1
+   integer ::  ih = 2
+   integer ::  jh = 2
+   integer ::  kh = 1
+   integer ::  nsv = 0       !< Number of scalar fields
 
+   !grid data
    logical :: luniformz = .false.
    real :: dx              !<  grid spacing in x-direction
    real :: dy              !<  grid spacing in y-direction
@@ -34,7 +36,7 @@ module modglobal
    ! real :: dziq            !<  1/(dz*4)
    real :: dxi5            !<  1/(2*dx)
    real :: dyi5            !<  1/(2*dy)
-   ! real :: dzi5            !<  1/(2*dz)
+   real :: dzi5            !<  1/(2*dz)
    real :: dx2i            !<  (1/dx)**2
    real :: dy2i            !<  (1/dy)**2
    real :: dz2i      !< (1/dz)**2
@@ -100,6 +102,7 @@ contains
          dz = dzh(1)
          dzi = 1./dz
          dz2i = dzi**2
+         dzi5 = 0.5*dzi
 
          write(*,*) 'Working with uniform z grid:'
       endif

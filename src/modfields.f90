@@ -36,9 +36,6 @@ module modfields
    real(real32), allocatable :: um(:,:,:)   !< u at time t-1m/s
    real(real32), allocatable :: vm(:,:,:)   !< v at time t-1 m/s
    real(real32), allocatable :: wm(:,:,:)   !< w at time t-1m/s
-   !! optinally allocatable only for rk4
-   real(real32), allocatable :: rk4_acc(:,:,:)
-
 
 contains
    subroutine interpolate_fields_to_simtime()
@@ -100,7 +97,7 @@ contains
    subroutine allocate_fields()
       !< Allocates and sets to zero, all fields and profiles
       use modglobal, only:i1,ih,j1,jh,k1
-      use config, only: field_load_chunk_size,rkmethod
+      use config, only: field_load_chunk_size
 
       allocate(chunktime(field_load_chunk_size))
 
@@ -120,8 +117,6 @@ contains
       allocate(c0   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(cp   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(cm   (2-ih:i1+ih,2-jh:j1+jh,k1))
-
-      if (rkmethod == 4) allocate(rk4_acc(2-ih:i1+ih,2-jh:j1+jh,k1))
 
       allocate(ekh0 (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(u0   (2-ih:i1+ih,2-jh:j1+jh,k1))
@@ -299,7 +294,7 @@ contains
    end subroutine init_concentration_output_nc
 
    subroutine write_concentration_timeloop()
-      use modglobal, only: rsts,next_save,i1,j1,kmax
+      use modglobal, only: rsts,next_save,i1,j1,kmax,dt
       use config, only: output_save_interval
       use netcdf_utils, only: write_concentration_nc
 
@@ -310,6 +305,7 @@ contains
          write (*,*) "Saved concentration Field at: ", rsts
          write(*,*)  "Max value:", maxval(abs(c0))
          write(*,*)  "Min value:", minval(c0)
+         write(*,*)  "dt (ms):", dt
          if (maxval(abs(c0)) > 1e3) then
             call close_concentration_nc
             stop "CONCENTRTION VALUE EXCEEDED 1e3"

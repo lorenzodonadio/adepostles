@@ -6,73 +6,78 @@ contains
       use time_integrate, only: rkstep
       use modfields, only: c0
 
-      if (rkstep == 1) then
-         c0(48:50,80:82,3) = 5
-      endif
-      
+      ! if (rkstep == 1) then
+      ! c0(48:50,80:82,3) = 1
+      c0(51,100:104,3) = 1
+      c0(51,62:66,3) = 1
+      c0(51,4:8,3) = 1
+      ! endif
+
    end subroutine apply_source
 
    subroutine apply_bc()
-      call x_bc
-      call y_bc
-      call z_bc
+      use time_integrate, only: rkstep
+      use modfields, only: c0,cm
+      use config, only: rkmethod
+      ! if (rkstep == 1) then
+      call x_bc(c0)
+      call y_bc(c0)
+      call z_bc(c0)
+
+      ! if (rkmethod>1) then
+      !    call x_bc(cm)
+      !    call y_bc(cm)
+      !    call z_bc(cm)
+      ! endif
+      ! endif
+
    end subroutine apply_bc
 
-   subroutine z_bc()
-      ! Neumann BC for top and bottom
-      ! TODO maybe make this general and accept an array as input?
-      ! (2-ih:i1+ih,2-jh:j1+jh,k1))
-      use modglobal,only: k1,kh,kmax,i1,j1
-      use modfields, only: c0
+   subroutine z_bc(field)
+      ! Neumann BC for top and bottom, generalized to accept an array
       use modibm, only: libm
-      integer :: i,j
-      c0(:,:,k1) = c0(:,:,k1-1) !top level just mirror
+      use modglobal, only: k1, kh, kmax, i1,ih,j1,jh,k1
+      real, intent(inout) :: field(2-ih:i1+ih,2-jh:j1+jh,k1)
+      integer :: i, j
 
-      ! only apply boundary conditions where there are no building above
+      field(:,:,k1) = field(:,:,k1-1)  ! Top level, mirror
+
+      ! Only apply boundary conditions where there are no buildings above
       do i = 1, i1
          do j = 1, j1
             if (.not.libm(i,j,1)) then
-               c0(i,j,1) = c0(i,j,2) !ground level just mirror
+               field(i,j,1) = field(i,j,2)  ! Ground level, mirror
             endif
          end do
       end do
-
    end subroutine z_bc
 
-   subroutine x_bc()
-      ! Neumann BC for top and bottom
-      ! TODO maybe make this general and accept an array as input?
-      ! (2-ih:i1+ih,2-jh:j1+jh,k1))
-      use modglobal,only: ih,i1
-      use modfields, only: c0
-
+   subroutine x_bc(field)
+      ! Neumann BC for west and east boundaries, generalized to accept an array
+      use modglobal, only: i1,ih,j1,jh,k1
+      real, intent(inout) :: field(2-ih:i1+ih,2-jh:j1+jh,k1)
       integer :: i
-      ! we have 2 ghost cells actually
-      do i = 1, ih
-         !  WEST
-         c0(ih-i,:,:) = c0(ih-i+1,:,:)
-         !  EAST
-         c0(i1+i,:,:) = c0(ih+i-1,:,:)
-      end do
 
+      do i = 1, ih
+         ! WEST
+         field(ih-i,:,:) = field(ih-i+1,:,:)
+         ! EAST
+         field(i1+i,:,:) = field(i1+i-1,:,:)
+      end do
    end subroutine x_bc
 
-   subroutine y_bc()
-      ! Neumann BC for top and bottom
-      ! TODO maybe make this general and accept an array as input?
-      ! (2-ih:i1+ih,2-jh:j1+jh,k1))
-      use modglobal,only: jh,j1
-      use modfields, only: c0
-
+   subroutine y_bc(field)
+      ! Neumann BC for north and south boundaries, generalized to accept an array
+      use modglobal, only: i1,ih,j1,jh,k1
+      real, intent(inout) :: field(2-ih:i1+ih,2-jh:j1+jh,k1)
       integer :: j
-      ! we have 2 ghost cells actually
+
       do j = 1, jh
-         !  WEST
-         c0(:,jh-j,:) = c0(:,jh-j+1,:)
-         !  EAST
-         c0(:,j1+j,:) = c0(:,jh+j-1,:)
+         ! NORTH
+         field(:,jh-j,:) = field(:,jh-j+1,:)
+         ! SOUTH
+         field(:,j1+j,:) = field(:,j1+j-1,:)
       end do
    end subroutine y_bc
-
 
 end module modboundary

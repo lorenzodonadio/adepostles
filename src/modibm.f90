@@ -101,7 +101,7 @@ contains
       do k=2,kmax
          do j=2,j1
             do i=2,i1
-               !WEST
+                  !WEST   F T T T -> F T F
                if (libm(i,j,k) .and. .not.libm(i-1,j,k)) then
                   inorm_ibm(:,nsize) = (/i,j,k/)
                   nsize = nsize + 1

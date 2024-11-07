@@ -1,10 +1,10 @@
 &RUN
 iexpnr     =  001
-runtime    =  1000
-dtmax      =  2
+runtime    =  150
+dtmax      =  3
 ladaptivedt  =  .true.
 lanisotrop = .true.
-rkmethod = 2
+rkmethod = 3
 field_load_chunk_size = 10
 field_dump_path = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/utrecht_ideal_save/completefielddump.nc"
 output_save_interval = 1
