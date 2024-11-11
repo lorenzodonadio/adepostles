@@ -52,6 +52,11 @@ link_directories(${NC_LIB_DIR})
 # Update the NetCDF linking to include HDF5
 message("FLIBS_NC ${FLIBS_NC}")
 
+# Ensure NetCDF linking libraries are included
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FFLAGS_NC}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLIBS_NC}")
+
+
 # Add the source directory where the .f90 files are located
 add_subdirectory(src)
 
