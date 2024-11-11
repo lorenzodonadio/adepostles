@@ -28,7 +28,7 @@ contains
 
    subroutine z_bc(field)
       ! Neumann BC for top and bottom, generalized to accept an array
-      use modibm, only: libm
+      use modibm, only: groundlibm
       use modglobal, only: k1, kh, kmax, i1,ih,j1,jh,k1
       real, intent(inout) :: field(2-ih:i1+ih,2-jh:j1+jh,k1)
       integer :: i, j
@@ -38,7 +38,7 @@ contains
       ! Only apply boundary conditions where there are no buildings above
       do i = 1, i1
          do j = 1, j1
-            if (.not.libm(i,j,1)) then
+            if (.not.groundlibm(i,j)) then
                field(i,j,1) = field(i,j,2)  ! Ground level, mirror
             endif
          end do

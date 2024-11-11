@@ -10,6 +10,7 @@ module modfields
    real(real32), allocatable :: rhobf_chunk(:,:)   !< density full level (zf,time)
    real(real32), allocatable :: rhobh_chunk(:,:)   !< density half level (zh,time)
    real(real32), allocatable :: rhobf(:)   !< density full level (zf)
+   real(real32), allocatable :: rhobfi(:)  !< inverse density full level (zf)
    real(real32), allocatable :: rhobh(:)   !< density half level (zh)
 
    real(real32), allocatable :: ekh(:,:,:,:) !< k-coefficient for eddy diffusivity ekh(xt,yt,zt,time) m2/s
@@ -80,6 +81,7 @@ contains
          rhobh = rhobh_chunk(:,nti)*(1-d)+rhobh_chunk(:,nti-1)*d
       endif
 
+      rhobfi = 1./rhobf
       ! write(*,*) 'simtime: ', rsts,' next time: ', chunktime(nti), ' delta: ',chunktime(nti) - rsts
    end subroutine interpolate_fields_to_simtime
 
@@ -104,16 +106,13 @@ contains
       allocate(rhobh_chunk(k1,field_load_chunk_size))
 
       allocate(rhobf(k1))
+      allocate(rhobfi(k1))
       allocate(rhobh(k1))
 
       allocate(ekh  (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
       allocate(u    (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
       allocate(v    (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
       allocate(w    (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
-
-      print *, 'shape U ', shape(u)
-      print *, 'shape v ', shape(v)
-      print *, 'shape w ', shape(w)
 
       allocate(ekh0 (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(u0   (2-ih:i1+ih,2-jh:j1+jh,k1))

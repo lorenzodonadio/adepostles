@@ -217,9 +217,9 @@ contains
 
       maxdt = int(min(cfl,vnm)/tres)
       if (dt<maxdt) then
-         dt = int(0.8*maxdt+0.2*dt)
+         dt = int(0.85*maxdt+0.15*dt)
       else
-         dt = int(0.95*maxdt)
+         dt = maxdt
       endif
 
       ! write (*,*) "cfl: ", cfl, "vnm: ", vnm , "New dt: ", dt*tres , 's'

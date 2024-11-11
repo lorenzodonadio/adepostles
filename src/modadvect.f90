@@ -37,7 +37,7 @@ contains
    subroutine advecc_upw(a_in,a_out)
 
       use modglobal, only : i1,ih,j1,jh,k1,kmax,dxi,dyi,dzi
-      use modfields, only : u0, v0, w0, rhobf
+      use modfields, only : u0, v0, w0, rhobf,rhobfi
       implicit none
 
       real(real32), dimension(2-ih:i1+ih,2-jh:j1+jh,k1), intent(in)  :: a_in !< Input: the cell centered field
@@ -72,7 +72,7 @@ contains
          do j=2,j1
             do i=2,i1
                a_out(i,j,k) = a_out(i,j,k) - &
-                  (1./rhobf(k))*(u0(i+1,j,k)*put(i+1,j,k)-u0(i,j,k)*put(i,j,k))*dxi
+                  rhobfi(k)*(u0(i+1,j,k)*put(i+1,j,k)-u0(i,j,k)*put(i,j,k))*dxi
             enddo
          enddo
       enddo
@@ -92,7 +92,7 @@ contains
          do j=2,j1
             do i=2,i1
                a_out(i,j,k) = a_out(i,j,k) - &
-                  (1./rhobf(k))*(v0(i,j+1,k)*put(i,j+1,k)-v0(i,j,k)*put(i,j,k))*dyi
+                  rhobfi(k)*(v0(i,j+1,k)*put(i,j+1,k)-v0(i,j,k)*put(i,j,k))*dyi
             enddo
          enddo
       enddo
@@ -114,7 +114,7 @@ contains
          do j=2,j1
             do i=2,i1
                a_out(i,j,k) = a_out(i,j,k) - &
-                  (1./rhobf(k))*(w0(i,j,k+1)*put(i,j,k+1)-w0(i,j,k)*put(i,j,k))*dzi
+                  rhobfi(k)*(w0(i,j,k+1)*put(i,j,k+1)-w0(i,j,k)*put(i,j,k))*dzi
             enddo
          enddo
       enddo

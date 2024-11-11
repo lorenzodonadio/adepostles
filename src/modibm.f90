@@ -4,14 +4,19 @@ module modibm
 
    !< Normal immersed boundary layers for incoming x,y,z-velocities
    logical, allocatable :: libm(:,:,:)!, lnorm_x(:,:,:), lnorm_y(:,:,:), lnorm_z(:,:,:)
+   logical, allocatable :: groundlibm(:,:)!, lnorm_x(:,:,:), lnorm_y(:,:,:), lnorm_z(:,:,:)
 !    integer,allocatable :: inorm_west(:,:),inorm_east(:,:),inorm_south(:,:),inorm_north(:,:),inorm_top(:,:)
    integer,allocatable :: inorm_ibm(:,:)
+   integer,allocatable :: coordsibm(:,:)
+   integer :: num_coords = 0
+
 contains
 
    subroutine init_ibm()
       use config, only: lapplyibm,ibm_input_file,ifinputibm
       use modglobal, only: i1,ih,j1,jh,k1,kh,kmax,zm,zt !zm = zh omgg
       real(real32), allocatable :: bc_height(:,:)     !< Height of immersed boundary at grid pos x,y
+      integer,allocatable :: temp(:,:) !> for storing the coordinates
       integer       :: i, j, k, nsize
       character(128) :: readstring
 
@@ -20,6 +25,7 @@ contains
 
       allocate(bc_height (i1,j1))
       allocate(libm(2-ih:i1+ih,2-jh:j1+jh,k1))
+      allocate(groundlibm(2-ih:i1+ih,2-jh:j1+jh))
 
       nsize = 0 !allboundaries
       libm = .false.
@@ -44,11 +50,34 @@ contains
       write(6,*) 'Succesfully read inputfile in modibm'
       !   write(*,*) bc_height
 
+
+      ! Initialize the coordsibm array to a reasonable starting size
+      allocate(coordsibm(3, 1000))
+
       do i=2,i1
          do j=2,j1
             do k=1,kmax
-               if (zt(k) <= bc_height(i,j)) then  !obstacle height is above mid point of vertical grid
+               if (zt(k) <= bc_height(i,j)) then
                   libm (i,j,k) = .true.
+
+                  ! Increment the number of coordinates
+                  num_coords = num_coords + 1
+
+
+                  ! If the coordsibm array is full, allocate more space
+                  if (num_coords > size(coordsibm, 2)) then
+                     allocate(temp(3, size(coordsibm, 2) + 1000))
+                     temp(:, 1:size(coordsibm, 2)) = coordsibm
+                     deallocate(coordsibm)
+                     coordsibm = temp
+                     deallocate(temp)
+                  end if
+
+                  ! Store the i, j, k coordinates
+                  coordsibm(1, num_coords) = i
+                  coordsibm(2, num_coords) = j
+                  coordsibm(3, num_coords) = k
+
                   !   TODO make use of ksfc, mainly to improve diffusion loop
                   !   ksfc (i,j)   = k + 1   !half (flux) level
                   !   if (ksfc(i,j).gt.kibm_maxl) then
@@ -56,13 +85,19 @@ contains
                   !   endif
                   ! write (6,*) 'libm',i+myidx*imax,j+myidy*jmax,i,j,k,libm(i,j,k),bc_height(i+myidx*imax,j+myidy*jmax),zh(ksfc(i,j))
                   !   write (6,*) i,j,k
-               endif
+               end if
             end do
          end do
       end do
 
+      ! Resize the coordsibm array to the final size
+      allocate(temp(3, num_coords))
+      temp = coordsibm(:, 1:num_coords)
+      deallocate(coordsibm)
+      coordsibm = temp
+      deallocate(temp)
       deallocate (bc_height)
-
+      groundlibm = libm(:,:,1)
 
       !cstep            0     X      X     X      0       ,building position
       !cstep           i-2   i-1     i    i+1    i+2
@@ -94,39 +129,34 @@ contains
 
       write(*,*) 'IBM DIMENSIONS: ', nsize
 
-      allocate(inorm_ibm(3,nsize))
+      allocate(inorm_ibm(4,nsize))
       !   do k=1,kmax
       !reuse those ints
       nsize = 1
       do k=2,kmax
          do j=2,j1
             do i=2,i1
-               !WEST   F T T T -> F T F
                if (libm(i,j,k) .and. .not.libm(i-1,j,k)) then
-                  inorm_ibm(:,nsize) = (/i,j,k/)
+                  inorm_ibm(:,nsize) = (/i,j,k,1/) !WEST   F T T T -> F T F
                   nsize = nsize + 1
-                  !EAST
                elseif (libm(i,j,k) .and. .not.libm(i+1,j,k)) then
-                  inorm_ibm(:,nsize) = (/i,j,k/)
+                  inorm_ibm(:,nsize) = (/i,j,k,2/) !EAST
                   nsize = nsize + 1
-                  !SOUTH
                elseif (libm(i,j,k) .and. .not.libm(i,j-1,k)) then
-                  inorm_ibm(:,nsize) = (/i,j,k/)
+                  inorm_ibm(:,nsize) = (/i,j,k,3/) !SOUTH
                   nsize = nsize + 1
-                  !NORTH
                elseif (libm(i,j,k) .and. .not.libm(i,j+1,k)) then
-                  inorm_ibm(:,nsize) = (/i,j,k/)
+                  inorm_ibm(:,nsize) = (/i,j,k,4/) !NORTH
                   nsize = nsize + 1
-                  !TOP
                elseif (libm(i,j,k) .and. .not.libm(i,j,k+1)) then
-                  inorm_ibm(:,nsize) = (/i,j,k/)
+                  inorm_ibm(:,nsize) = (/i,j,k,5/) !TOP
                   nsize = nsize + 1
                endif
             end do
          end do
       end do
 
-
+      deallocate(libm)
       write(*,*) 'Succesfully found normal layers in all directions'
       ! write(*,*) 'ALL BOUNDARIES', inorm_ibm(:,:20)
    end subroutine init_ibm
@@ -134,33 +164,32 @@ contains
    subroutine apply_ibm()
       use modglobal, only: i1,j1,kmax,nsv
       use modtracer, only: c0
-      integer       :: i, j, k,nboundary,sv
+      integer       :: i, j, k, n, nboundary
       real          :: cwest,ceast,csouth,cnorth,ctop,csum
-      do sv = 1, nsv
+      do n = 1, nsv
 
          do nboundary = 1, size(inorm_ibm,2)
             i = inorm_ibm(1,nboundary)
             j = inorm_ibm(2,nboundary)
             k = inorm_ibm(3,nboundary)
 
-            if (c0(i,j,k,sv) > 1e-6) then
+            if (c0(i,j,k,n) > 1e-6) then
                ! write(*,*) i,j,k,c0(i,j,k)
-               csum = c0(i+1,j,k,sv)+c0(i-1,j,k,sv)+c0(i,j+1,k,sv)+c0(i,j-1,k,sv)+c0(i,j,k+1,sv)
-               c0(i+1,j,k,sv) = c0(i+1,j,k,sv)*c0(i,j,k,sv)/csum
-               c0(i-1,j,k,sv) = c0(i-1,j,k,sv)*c0(i,j,k,sv)/csum
-               c0(i,j+1,k,sv) = c0(i,j+1,k,sv)*c0(i,j,k,sv)/csum
-               c0(i,j-1,k,sv) = c0(i,j-1,k,sv)*c0(i,j,k,sv)/csum
-               c0(i,j,k+1,sv) = c0(i,j,k+1,sv)*c0(i,j,k,sv)/csum
+               csum = c0(i+1,j,k,n)+c0(i-1,j,k,n)+c0(i,j+1,k,n)+c0(i,j-1,k,n)+c0(i,j,k+1,n)
+               c0(i+1,j,k,n) = c0(i+1,j,k,n)*c0(i,j,k,n)/csum
+               c0(i-1,j,k,n) = c0(i-1,j,k,n)*c0(i,j,k,n)/csum
+               c0(i,j+1,k,n) = c0(i,j+1,k,n)*c0(i,j,k,n)/csum
+               c0(i,j-1,k,n) = c0(i,j-1,k,n)*c0(i,j,k,n)/csum
+               c0(i,j,k+1,n) = c0(i,j,k+1,n)*c0(i,j,k,n)/csum
             endif
          end do
       end do
 
-      do k=1,kmax
-         do j=2,j1
-            do i=2,i1
-               if (libm(i,j,k)) c0(i,j,k,:) = 0.
-            end do
-         end do
+      do n = 1, num_coords
+         i = coordsibm(1,n)
+         j = coordsibm(2,n)
+         k = coordsibm(3,n)
+         c0(i,j,k,:) = 0
       end do
 
    end subroutine apply_ibm

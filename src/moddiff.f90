@@ -41,7 +41,7 @@ contains
    subroutine diffc (a_in,a_out)
 
       use modglobal, only : i1,ih,i2,j1,jh,j2,k1,kmax,dx2i,dzf,dy2i,dzh
-      use modfields, only : rhobf,rhobh,ekh0 !ksfc
+      use modfields, only : rhobf,rhobfi,rhobh,ekh0 !ksfc
       implicit none
 
       real(real32), intent(in)    :: a_in(2-ih:i1+ih,2-jh:j1+jh,k1)
@@ -71,10 +71,10 @@ contains
                   ( (ekh0(i,jp,k)+ekh0(i,j,k)) *(a_in(i,jp,k)-a_in(i,j,k)) &
                   -(ekh0(i,j,k)+ekh0(i,jm,k)) *(a_in(i,j,k)-a_in(i,jm,k)) )*dy2i * anis_fac(k) &
                   + &
-                  ( rhobh(kp)/rhobf(k) * (dzf(kp)*ekh0(i,j,k) + dzf(k)*ekh0(i,j,kp)) &
+                  ( rhobh(kp)*rhobfi(k) * (dzf(kp)*ekh0(i,j,k) + dzf(k)*ekh0(i,j,kp)) &
                   *  (a_in(i,j,kp)-a_in(i,j,k)) / dzh(kp)**2 &
                   - &
-                  rhobh(k)/rhobf(k) * (dzf(km)*ekh0(i,j,k) + dzf(k)*ekh0(i,j,km)) &
+                  rhobh(k)*rhobfi(k) * (dzf(km)*ekh0(i,j,k) + dzf(k)*ekh0(i,j,km)) &
                   *  (a_in(i,j,k)-a_in(i,j,km)) / dzh(k)**2           )/dzf(k) &
                   )
 

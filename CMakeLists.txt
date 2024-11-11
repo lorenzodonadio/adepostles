@@ -38,6 +38,8 @@ else()
         execute_process(COMMAND ${NF_CONFIG_EXECUTABLE} --flibs OUTPUT_VARIABLE FLIBS_NC OUTPUT_STRIP_TRAILING_WHITESPACE)
         execute_process(COMMAND ${NF_CONFIG_EXECUTABLE} --includedir OUTPUT_VARIABLE NC_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
         execute_process(COMMAND ${NF_CONFIG_EXECUTABLE} --prefix OUTPUT_VARIABLE NC_LIB_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        
+        # this is because we dont need the netcdf-c and in delftblue the installations are not in the same place
         string(REPLACE "-lnetcdf -lnetcdf" "" FLIBS_NC "${FLIBS_NC}")
 
         set(NC_LIB_DIR "${NC_LIB_DIR}")  # Ensure the library path is correct
@@ -54,10 +56,8 @@ link_directories(${NC_LIB_DIR})
 # Update the NetCDF linking to include HDF5
 message("FLIBS_NC ${FLIBS_NC}")
 
-# Ensure NetCDF linking libraries are included
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FFLAGS_NC}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLIBS_NC}")
-
+# Add profiling flags
+# set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -pg")
 
 # Add the source directory where the .f90 files are located
 add_subdirectory(src)
