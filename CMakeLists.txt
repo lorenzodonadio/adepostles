@@ -38,6 +38,8 @@ else()
         execute_process(COMMAND ${NF_CONFIG_EXECUTABLE} --flibs OUTPUT_VARIABLE FLIBS_NC OUTPUT_STRIP_TRAILING_WHITESPACE)
         execute_process(COMMAND ${NF_CONFIG_EXECUTABLE} --includedir OUTPUT_VARIABLE NC_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
         execute_process(COMMAND ${NF_CONFIG_EXECUTABLE} --prefix OUTPUT_VARIABLE NC_LIB_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REPLACE "-lnetcdf -lnetcdf" "" FLIBS_NC "${FLIBS_NC}")
+
         set(NC_LIB_DIR "${NC_LIB_DIR}")  # Ensure the library path is correct
     else()
         message(FATAL_ERROR "nf-config not found. Make sure NetCDF-Fortran is installed or set NETCDF_INCLUDE and NETCDF_LIB environment variables.")
