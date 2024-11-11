@@ -101,7 +101,7 @@ contains
       do k=2,kmax
          do j=2,j1
             do i=2,i1
-                  !WEST   F T T T -> F T F
+               !WEST   F T T T -> F T F
                if (libm(i,j,k) .and. .not.libm(i-1,j,k)) then
                   inorm_ibm(:,nsize) = (/i,j,k/)
                   nsize = nsize + 1
@@ -132,30 +132,33 @@ contains
    end subroutine init_ibm
 
    subroutine apply_ibm()
-      use modglobal, only: i1,j1,kmax
-      use modfields, only: c0
-      integer       :: i, j, k,nboundary
+      use modglobal, only: i1,j1,kmax,nsv
+      use modtracer, only: c0
+      integer       :: i, j, k,nboundary,sv
       real          :: cwest,ceast,csouth,cnorth,ctop,csum
-      do nboundary = 1, size(inorm_ibm,2)
-         i = inorm_ibm(1,nboundary)
-         j = inorm_ibm(2,nboundary)
-         k = inorm_ibm(3,nboundary)
+      do sv = 1, nsv
 
-         if (c0(i,j,k) > 1e-6) then
-            ! write(*,*) i,j,k,c0(i,j,k)
-            csum = c0(i+1,j,k)+c0(i-1,j,k)+c0(i,j+1,k)+c0(i,j-1,k)+c0(i,j,k+1)
-            c0(i+1,j,k) = c0(i+1,j,k)*c0(i,j,k)/csum
-            c0(i-1,j,k) = c0(i-1,j,k)*c0(i,j,k)/csum
-            c0(i,j+1,k) = c0(i,j+1,k)*c0(i,j,k)/csum
-            c0(i,j-1,k) = c0(i,j-1,k)*c0(i,j,k)/csum
-            c0(i,j,k+1) = c0(i,j,k+1)*c0(i,j,k)/csum
-         endif
+         do nboundary = 1, size(inorm_ibm,2)
+            i = inorm_ibm(1,nboundary)
+            j = inorm_ibm(2,nboundary)
+            k = inorm_ibm(3,nboundary)
+
+            if (c0(i,j,k,sv) > 1e-6) then
+               ! write(*,*) i,j,k,c0(i,j,k)
+               csum = c0(i+1,j,k,sv)+c0(i-1,j,k,sv)+c0(i,j+1,k,sv)+c0(i,j-1,k,sv)+c0(i,j,k+1,sv)
+               c0(i+1,j,k,sv) = c0(i+1,j,k,sv)*c0(i,j,k,sv)/csum
+               c0(i-1,j,k,sv) = c0(i-1,j,k,sv)*c0(i,j,k,sv)/csum
+               c0(i,j+1,k,sv) = c0(i,j+1,k,sv)*c0(i,j,k,sv)/csum
+               c0(i,j-1,k,sv) = c0(i,j-1,k,sv)*c0(i,j,k,sv)/csum
+               c0(i,j,k+1,sv) = c0(i,j,k+1,sv)*c0(i,j,k,sv)/csum
+            endif
+         end do
       end do
 
       do k=1,kmax
          do j=2,j1
             do i=2,i1
-               if (libm(i,j,k)) c0(i,j,k) = 0.
+               if (libm(i,j,k)) c0(i,j,k,:) = 0.
             end do
          end do
       end do

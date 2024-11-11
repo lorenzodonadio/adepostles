@@ -14,6 +14,7 @@ module modtracer_type
       character(len=16) :: unit="dummy unit"
       ! Moleculare mass of tracer (g mol-1)
       real(real32)     :: molar_mass=-999.
+      real(real32),allocatable     :: sources(:,:)
       ! Tracer index in sv0, svm, svp
       integer           :: trac_idx=-1
       ! Boolean if tracer is emitted

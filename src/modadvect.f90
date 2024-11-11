@@ -1,33 +1,7 @@
-!> \file advec_kappa.f90
-!!  Does advection with a kappa limiter scheme.
+!> \file modadvect.f90
+!!  Does advection with a 1st order upwind scheme.
 !! \par Revision list
 !! \par Authors
-!! \see Hundsdorfer et al 1995
-!!
-!! For advection of scalars that need to be strictly monotone (for example chemically reacting species)
-!! the kappa scheme has been implemented:
-!! \latexonly
-!! \begin{eqnarray}
-!!  F_{i-\frac{1}{2}}^{\kappa} &=& \fav{u}_{i-\frac{1}{2}}
-!!  \left[\phi_{i-1}+\frac{1}{2}\kappa_{i-\frac{1}{2}}\left(\phi_{i-1}-\phi_{i-2}\right)\right],
-!! \end{eqnarray}
-!! in case $\fav{u}>0$. $\kappa_{i-\smfrac{1}{2}}$ serves as a switch between higher order advection and
-!! first order upwind in case of strong upwind gradients of $\phi$.
-!! \endlatexonly
-!! This makes the scheme monotone, but also rather dissipative.
-!!
-!! limiter phi(r) = max(0, min(2*r, 2, K(r)))   (20) in Hundsdorfer 1995
-!! K(r) = 1./3.+2./3.*r here -> kappa = 1/3 -> third-order upwind-biased scheme
-!!
-!! Changes 2020 by Jisk Attema and Fredrik Jansson:
-!! - support for non-uniform vertical grid by replacing dzi by 1/dzf(k).
-!!   neither the gradient nor the limiter has been modified.
-!! - vectorization
-!!   - rlim function inlined and rewritten without division and eps1
-!!   - both branches of if uvw0 > 0 calculated, then selected
-!!     in order to enable vectorization
-!!   - merge k-loops of the x,y,z advection steps for better cache efficiency
-!!
 !  This file is part of DALES.
 !
 ! DALES is free software; you can redistribute it and/or modify
@@ -45,9 +19,107 @@
 !
 !  Copyright 1993-2009 Delft University of Technology, Wageningen University, Utrecht University, KNMI
 !
-module advec_kappa
-   use, intrinsic :: iso_fortran_env
+
+module modadvect
+   use iso_fortran_env, only:real32
 contains
+   !> Advection at cell center
+   subroutine apply_advection()
+      use modtracer, only: c0,cp
+      use modglobal, only: nsv
+      integer :: i
+      do i = 1, nsv
+         call advecc_upw(c0(:,:,:,i),cp(:,:,:,i))
+      end do
+
+   end subroutine apply_advection
+
+   subroutine advecc_upw(a_in,a_out)
+
+      use modglobal, only : i1,ih,j1,jh,k1,kmax,dxi,dyi,dzi
+      use modfields, only : u0, v0, w0, rhobf
+      implicit none
+
+      real(real32), dimension(2-ih:i1+ih,2-jh:j1+jh,k1), intent(in)  :: a_in !< Input: the cell centered field
+      real(real32), dimension(2-ih:i1+ih,2-jh:j1+jh,k1), intent(inout) :: a_out !< Output: the tendency
+
+      real(real32), dimension(2-ih:i1+ih,2-jh:j1+jh,k1) :: put
+      real(real32), dimension(2-ih:i1+ih,2-jh:j1+jh,k1) :: rho_a_in
+      integer :: i,j,k
+
+
+      do k=1,k1
+         do j=2-jh,j1+jh
+            do i=2-ih,i1+ih
+               rho_a_in(i,j,k)=rhobf(k)*a_in(i,j,k)
+            end do
+         end do
+      end do
+
+      do k=1,k1
+         do j=2,j1
+            do i=2,i1+1
+               if( u0(i,j,k) > 0 ) then
+                  put(i,j,k) = rho_a_in(i-1,j,k)
+               else
+                  put(i,j,k) = rho_a_in(i,j,k)
+               endif
+            enddo
+         enddo
+      enddo
+
+      do k=1,k1
+         do j=2,j1
+            do i=2,i1
+               a_out(i,j,k) = a_out(i,j,k) - &
+                  (1./rhobf(k))*(u0(i+1,j,k)*put(i+1,j,k)-u0(i,j,k)*put(i,j,k))*dxi
+            enddo
+         enddo
+      enddo
+
+      do k=1,k1
+         do j=2,j1+1
+            do i=2,i1
+               if( v0(i,j,k) > 0 ) then
+                  put(i,j,k) = rho_a_in(i,j-1,k)
+               else
+                  put(i,j,k) = rho_a_in(i,j,k)
+               endif
+            enddo
+         enddo
+      enddo
+      do k=1,k1
+         do j=2,j1
+            do i=2,i1
+               a_out(i,j,k) = a_out(i,j,k) - &
+                  (1./rhobf(k))*(v0(i,j+1,k)*put(i,j+1,k)-v0(i,j,k)*put(i,j,k))*dyi
+            enddo
+         enddo
+      enddo
+
+      put(2:i1,2:j1, 1) = 0
+      put(2:i1,2:j1,k1) = 0
+      do k=2,kmax
+         do j=2,j1
+            do i=2,i1
+               if( w0(i,j,k) > 0 ) then
+                  put(i,j,k) = rho_a_in(i,j,k-1)
+               else
+                  put(i,j,k) = rho_a_in(i,j,k)
+               endif
+            enddo
+         enddo
+      enddo
+      do k=1,kmax
+         do j=2,j1
+            do i=2,i1
+               a_out(i,j,k) = a_out(i,j,k) - &
+                  (1./rhobf(k))*(w0(i,j,k+1)*put(i,j,k+1)-w0(i,j,k)*put(i,j,k))*dzi
+            enddo
+         enddo
+      enddo
+
+   end subroutine advecc_upw
 
    subroutine advecc_kappa(a_in,a_out)
       use modglobal, only : i1,i2,ih,j1,j2,jh,k1,kmax,dxi,dyi,dzf
@@ -205,4 +277,4 @@ contains
       end do
 
    end subroutine advecc_kappa
-end module advec_kappa
+end module modadvect

@@ -2,27 +2,20 @@ module modboundary
    implicit none
 
 contains
-   subroutine apply_source()
-      use time_integrate, only: rkstep
-      use modfields, only: c0
-
-      ! if (rkstep == 1) then
-      ! c0(48:50,80:82,3) = 1
-      c0(51,100:104,3) = 1
-      c0(51,62:66,3) = 1
-      c0(51,4:8,3) = 1
-      ! endif
-
-   end subroutine apply_source
 
    subroutine apply_bc()
       use time_integrate, only: rkstep
-      use modfields, only: c0,cm
+      use modtracer, only: c0,cm
       use config, only: rkmethod
-      ! if (rkstep == 1) then
-      call x_bc(c0)
-      call y_bc(c0)
-      call z_bc(c0)
+      use modglobal, only: nsv
+      integer :: i
+      do i = 1, nsv
+
+         ! if (rkstep == 1) then
+         call x_bc(c0(:,:,:,i))
+         call y_bc(c0(:,:,:,i))
+         call z_bc(c0(:,:,:,i))
+      end do
 
       ! if (rkmethod>1) then
       !    call x_bc(cm)

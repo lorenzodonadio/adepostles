@@ -3,21 +3,20 @@ module time_integrate
    implicit none
    integer, save :: rkstep = 1   ! Current RK substep
 
-   real(real32), allocatable :: rk1(:,:,:)
-   real(real32), allocatable :: rk2(:,:,:)
-   real(real32), allocatable :: rk3(:,:,:)
+   real(real32), allocatable :: rk1(:,:,:,:)
+   real(real32), allocatable :: rk2(:,:,:,:)
+   real(real32), allocatable :: rk3(:,:,:,:)
 
 contains
 
    subroutine allocate_k()
-      use modglobal, only:i1,ih,j1,jh,k1
+      use modglobal, only:i1,ih,j1,jh,k1,nsv
       use config, only: field_load_chunk_size,rkmethod
 
-      if (rkmethod > 1) allocate(rk1(2-ih:i1+ih,2-jh:j1+jh,k1)) !2nd order or higher may need k1
+      if (rkmethod > 2) allocate(rk1(2-ih:i1+ih,2-jh:j1+jh,k1,nsv)) !2nd order or higher may need k1
+      if (rkmethod > 2) allocate(rk2(2-ih:i1+ih,2-jh:j1+jh,k1,nsv)) !3nd order or higher may need k2
 
-      if (rkmethod > 2) allocate(rk2(2-ih:i1+ih,2-jh:j1+jh,k1)) !3nd order or higher may need k2
-
-      if (rkmethod > 3) allocate(rk3(2-ih:i1+ih,2-jh:j1+jh,k1)) !4nd order or higher may need k3
+      if (rkmethod > 3) allocate(rk3(2-ih:i1+ih,2-jh:j1+jh,k1,nsv)) !4nd order or higher may need k3
 
 
    end subroutine allocate_k
@@ -34,7 +33,7 @@ contains
    subroutine time_step()
       use config, only: ladaptivedt,rkmethod
       use modglobal, only: simtime, dt, tres, rsts
-      use modfields, only:  c0
+      use modtracer, only:  c0
       ! Check if we need adaptive timestep (only at start of RK steps)
       if (rkstep == 1 .and. ladaptivedt) call adaptative_dt
 
@@ -63,7 +62,7 @@ contains
    end subroutine time_step
 
    subroutine euler_step()
-      use modfields, only: c0, cp
+      use modtracer, only: c0, cp
       use modglobal, only: dt, tres
 
       ! Euler method is single step
@@ -73,7 +72,7 @@ contains
    end subroutine euler_step
 
    subroutine rk2_step()
-      use modfields, only: cm, c0, cp
+      use modtracer, only: cm, c0, cp
       use modglobal, only: dt, tres
 
       select case(rkstep)
@@ -101,7 +100,7 @@ contains
       ! __________________
       !     |   2/9  1/3   4/9
 
-      use modfields, only: cm, c0, cp
+      use modtracer, only: cm, c0, cp
       use modglobal, only: dt, tres
       real :: rdt
       rdt = dt*tres
@@ -141,7 +140,7 @@ contains
       ! ------------------------------------
       !       |  1/8     3/8    3/8    1/8
 
-      use modfields, only: cm, c0, cp
+      use modtracer, only: cm, c0, cp
       use modglobal, only: dt, tres
       real :: rdt
       integer :: dt_div_3

@@ -21,7 +21,7 @@ module modglobal
    integer ::  ih = 2
    integer ::  jh = 2
    integer ::  kh = 1
-   integer ::  nsv = 0       !< Number of scalar fields
+   integer ::  nsv = 0       !< Number of scalar fields, loaded in modtracers
 
    !grid data
    logical :: luniformz = .false.

@@ -2,7 +2,6 @@ module modfields
    use iso_fortran_env
    implicit none
 
-   integer :: output_ncid !< where to write the output concentration
    integer :: nti = 0 !< next time index, index of closest fields measurement in future time
    real :: dtfield !< delta t between the two currecly active fields
    !this makes life easier
@@ -112,11 +111,9 @@ contains
       allocate(v    (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
       allocate(w    (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
 
-      ! TODO make this parallelizable, so that we can handle multiple ADE solutions with the same u,v,w,ekh,rho, thats the goal
-      ! maybe we just add a fourth dimension and thats it?
-      allocate(c0   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(cp   (2-ih:i1+ih,2-jh:j1+jh,k1))
-      allocate(cm   (2-ih:i1+ih,2-jh:j1+jh,k1))
+      print *, 'shape U ', shape(u)
+      print *, 'shape v ', shape(v)
+      print *, 'shape w ', shape(w)
 
       allocate(ekh0 (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(u0   (2-ih:i1+ih,2-jh:j1+jh,k1))
@@ -133,9 +130,9 @@ contains
       allocate(vp   (2-ih:i1+ih,2-jh:j1+jh,k1))
       allocate(wp   (2-ih:i1+ih,2-jh:j1+jh,k1))
 
-      c0 = 0.
-      cp = 0.
-      cm = 0.
+      !   c0 = 0.
+      !   cp = 0.
+      !   cm = 0.
 
       ! c0(10:12,20:22,3:5) = 5.
       ! c0(40:44,70:72,3:5) = 5.
@@ -177,61 +174,172 @@ contains
 
    end subroutine load_fields_intimeloop
 
+!    subroutine load_fields_chunk(filename, chunk_number)
+!       use netcdf
+!       use mpi_f08
+!       use modglobal, only: i1, j1, k1
+!       use netcdf_utils, only: nchandle_error, get_field_chunk, get_profile_chunk
+!       use modglobal, only: total_chunks
+!       implicit none
+
+!       integer :: dimids(4), dim_len
+!       integer :: i, ndims, dimsizes(4)
+
+!       character(len=*), intent(in) :: filename
+!       integer, intent(in) :: chunk_number
+!       integer :: ncid, retval, varid, my_id, comm_size
+
+!       ! Get MPI rank and communicator size
+!       call MPI_Comm_rank(MPI_COMM_WORLD, my_id, retval)
+!       call MPI_Comm_size(MPI_COMM_WORLD, comm_size, retval)
+
+!       if (my_id == 0) then
+!          ! Only root process loads data from file
+!          if (chunk_number > total_chunks .or. chunk_number < 1) then
+!             write(*,*) 'Error loading chunks, invalid chunk number, exiting'
+!             write(*,*) 'Chunk number: ', chunk_number, " - Total chunks: ", total_chunks
+!             return
+!          endif
+
+!          ! Open the NetCDF file
+!          retval = nf90_open(filename, NF90_NOWRITE, ncid)
+!          call nchandle_error(retval, 'Error opening file: '//trim(filename))
+!          ! Get the variable ID for 'u'
+!          retval = nf90_inq_varid(ncid, 'u', varid)
+!          call nchandle_error(retval, 'Error: Could not get variable ID for u')
+!          call nchandle_error(retval, 'Error: Could not inquire variable u')
+
+!          ! Inquire variable dimensions and print them
+!          retval = nf90_inquire_variable(ncid, varid, ndims=ndims, dimids=dimids)
+
+!          ! Loop through each dimension and get its size
+!          do i = 1, ndims
+!             retval = nf90_inquire_dimension(ncid, dimids(i), len=dim_len)
+!             call nchandle_error(retval, 'Error: Could not inquire dimension size')
+!             dimsizes(i) = dim_len
+!          end do
+
+
+!          ! Print the shape of 'u' as stored in the NetCDF file
+!          print *, 'Expected shape of u in NetCDF file: (', dimsizes(1:ndims), ')'
+!          print *, 'Expected shape U', shape(u(2:i1,2:j1,2:k1,:)), ')'
+!          ! Load fields
+!          call get_field_chunk(ncid, 'u',   varid, u  (2:i1,2:j1,2:k1,:), chunk_number)
+!          call get_field_chunk(ncid, 'v',   varid, v  (2:i1,2:j1,2:k1,:), chunk_number)
+!          call get_field_chunk(ncid, 'w',   varid, w  (2:i1,2:j1,2:k1,:), chunk_number)
+!          call get_field_chunk(ncid, 'ekh', varid, ekh(2:i1,2:j1,2:k1,:), chunk_number)
+
+!          ! Load profiles
+!          call get_profile_chunk(ncid, 'rhobh', varid, rhobh_chunk, chunk_number)
+!          call get_profile_chunk(ncid, 'rhobf', varid, rhobf_chunk, chunk_number)
+
+!          ! Close the NetCDF file
+!          retval = nf90_close(ncid)
+!          call nchandle_error(retval, 'Error closing file: '//trim(filename))
+
+!          ! Pad the fields before broadcasting (only on root)
+!          call pad_field(u)
+!          call pad_field(v)
+!          call pad_field(w)
+!          call pad_field(ekh)
+!          call pad_profile(rhobf_chunk)
+!          call pad_profile(rhobh_chunk)
+!       endif
+
+!       call MPI_Barrier(MPI_COMM_WORLD)
+!       ! Broadcast the data to all other processes
+!       call MPI_Bcast(u, size(u), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+!       call MPI_Bcast(v, size(v), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+!       call MPI_Bcast(w, size(w), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+!       call MPI_Bcast(ekh, size(ekh), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+!       call MPI_Bcast(rhobf_chunk, size(rhobf_chunk), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+!       call MPI_Bcast(rhobh_chunk, size(rhobh_chunk), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+
+!       ! Check for errors in MPI_Bcast
+!       if (retval /= MPI_SUCCESS) then
+!          print *, 'Error broadcasting data from root'
+!          call MPI_Abort(MPI_COMM_WORLD, retval)
+!       endif
+
+!       print *, 'Loaded fields chunk: ', chunk_number, '/', total_chunks, ' on process ', my_id
+!    end subroutine load_fields_chunk
+
    subroutine load_fields_chunk(filename, chunk_number)
       !< Loads fields: u,v,w,ekh (3d+time) and vertical profiles rhobf & rhobh (1d+time) for the specific time specified by the chunk_number
       use netcdf
+      use mpi_f08
       use modglobal, only:i1,j1,kmax
       use netcdf_utils, only :nchandle_error, get_field_chunk,get_profile_chunk
       use modglobal,only: total_chunks
+      use modmpi, only: is_root
       character(len=*), intent(in) :: filename
       integer, intent(in) :: chunk_number
       integer :: ncid, retval, varid
 
-      if (chunk_number > total_chunks .or. chunk_number < 1) then
-         write(*,*) 'Error loading chunks, invalid chunk number, exiting'
-         write(*,*) 'Chunk number: ',chunk_number, " - Total chunks: ", total_chunks
-         return
+      if (is_root) then
+         if (chunk_number > total_chunks .or. chunk_number < 1) then
+            write(*,*) 'Error loading chunks, invalid chunk number, exiting'
+            write(*,*) 'Chunk number: ',chunk_number, " - Total chunks: ", total_chunks
+            return
+         endif
+
+         ! Time-dependent variable arrays (dynamic allocation)
+
+         ! Open the NetCDF file
+         retval = nf90_open(filename, NF90_NOWRITE, ncid)
+         call nchandle_error(retval, 'Error opening file: '//trim(filename))
+
+
+         ! Read time-dependent variables from the file
+         ! kmax instead of k1 because of number of ghost cells
+         ! For debuggind purposes,TODO implement a debug flag?
+         ! print *, shape(u)
+         ! print *, shape(u(2:i1,2:j1,2:kmax,:))
+         ! print *, 'Vertical U slice: u(5,5,:,1)'
+         ! print *, u(5,5,:,1)
+         ! print *, 'Horizontal U slice'
+         ! print *, u(:,5,5,1)
+         ! Load fields
+         call get_field_chunk(ncid, 'u',   varid, u  (2:i1,2:j1,2:kmax,:), chunk_number)
+         call get_field_chunk(ncid, 'v',   varid, v  (2:i1,2:j1,2:kmax,:), chunk_number)
+         call get_field_chunk(ncid, 'w',   varid, w  (2:i1,2:j1,2:kmax,:), chunk_number)
+         call get_field_chunk(ncid, 'ekh', varid, ekh(2:i1,2:j1,2:kmax,:), chunk_number)
+         ! Load profiles
+         call get_profile_chunk(ncid, 'rhobh', varid, rhobh_chunk(2:kmax,:), chunk_number)
+         call get_profile_chunk(ncid, 'rhobf', varid, rhobf_chunk(2:kmax,:), chunk_number)
+
+         ! Close the NetCDF file
+         retval = nf90_close(ncid)
+         call nchandle_error(retval, 'Error closing file: '//trim(filename))
+
+         ! print *, 'Fields variables loaded successfully from ', trim(filename), 'for chunk: ', chunk_number,'/',total_chunks
+         call pad_field(u)
+         call pad_field(v)
+         call pad_field(w)
+         call pad_field(ekh)
+         call pad_profile(rhobf_chunk)
+         call pad_profile(rhobh_chunk)
+
+         print *, 'Loaded fields chunk: ', chunk_number,'/',total_chunks
       endif
 
-      ! Time-dependent variable arrays (dynamic allocation)
+      call MPI_Barrier(MPI_COMM_WORLD)
+      ! Broadcast the data to all other processes
+      call MPI_Bcast(u, size(u), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+      call MPI_Bcast(v, size(v), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+      call MPI_Bcast(w, size(w), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+      call MPI_Bcast(ekh, size(ekh), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+      call MPI_Bcast(rhobf_chunk, size(rhobf_chunk), MPI_REAL, 0, MPI_COMM_WORLD, retval)
+      call MPI_Bcast(rhobh_chunk, size(rhobh_chunk), MPI_REAL, 0, MPI_COMM_WORLD, retval)
 
-      ! Open the NetCDF file
-      retval = nf90_open(filename, NF90_NOWRITE, ncid)
-      call nchandle_error(retval, 'Error opening file: '//trim(filename))
+      ! Check for errors in MPI_Bcast
+      if (retval /= MPI_SUCCESS) then
+         print *, 'Error broadcasting data from root'
+         call MPI_Abort(MPI_COMM_WORLD, retval)
+      endif
 
-
-      ! Read time-dependent variables from the file
-      ! kmax instead of k1 because of number of ghost cells
-      ! For debuggind purposes,TODO implement a debug flag?
-      ! print *, shape(u)
-      ! print *, shape(u(2:i1,2:j1,2:kmax,:))
-      ! print *, 'Vertical U slice: u(5,5,:,1)'
-      ! print *, u(5,5,:,1)
-      ! print *, 'Horizontal U slice'
-      ! print *, u(:,5,5,1)
-      ! Load fields
-      call get_field_chunk(ncid, 'u',   varid, u  (2:i1,2:j1,2:kmax,:), chunk_number)
-      call get_field_chunk(ncid, 'v',   varid, v  (2:i1,2:j1,2:kmax,:), chunk_number)
-      call get_field_chunk(ncid, 'w',   varid, w  (2:i1,2:j1,2:kmax,:), chunk_number)
-      call get_field_chunk(ncid, 'ekh', varid, ekh(2:i1,2:j1,2:kmax,:), chunk_number)
-      ! Load profiles
-      call get_profile_chunk(ncid, 'rhobh', varid, rhobh_chunk(2:kmax,:), chunk_number)
-      call get_profile_chunk(ncid, 'rhobf', varid, rhobf_chunk(2:kmax,:), chunk_number)
-
-      ! Close the NetCDF file
-      retval = nf90_close(ncid)
-      call nchandle_error(retval, 'Error closing file: '//trim(filename))
-
-      ! print *, 'Fields variables loaded successfully from ', trim(filename), 'for chunk: ', chunk_number,'/',total_chunks
-      call pad_field(u)
-      call pad_field(v)
-      call pad_field(w)
-      call pad_field(ekh)
-      call pad_profile(rhobf_chunk)
-      call pad_profile(rhobh_chunk)
-
-      print *, 'Loaded fields chunk: ', chunk_number,'/',total_chunks
    end subroutine load_fields_chunk
+
 
    subroutine pad_profile(p)
       use modglobal,only:k1,kh,kmax,dzh
@@ -285,44 +393,7 @@ contains
 
    end subroutine pad_field
 
-   subroutine init_concentration_output_nc()
-      use modglobal, only: xt,yt,zt
-      use config, only: outputfile_path
-      use netcdf_utils, only: create_concentration_file_nc
-
-      call create_concentration_file_nc(output_ncid,outputfile_path,xt,yt,zt)
-   end subroutine init_concentration_output_nc
-
-   subroutine write_concentration_timeloop()
-      use modglobal, only: rsts,next_save,i1,j1,kmax,dt
-      use config, only: output_save_interval
-      use netcdf_utils, only: write_concentration_nc
-
-      if (rsts>=next_save) then
-         call write_concentration_nc(output_ncid, c0(2:i1,2:j1,1:kmax), rsts)
-         next_save = next_save + output_save_interval
-
-         write (*,*) "Saved concentration Field at: ", rsts
-         write(*,*)  "Max value:", maxval(abs(c0))
-         write(*,*)  "Min value:", minval(c0)
-         write(*,*)  "dt (ms):", dt
-         if (maxval(abs(c0)) > 1e3) then
-            call close_concentration_nc
-            stop "CONCENTRTION VALUE EXCEEDED 1e3"
-         endif
-      endif
-
-   end subroutine write_concentration_timeloop
-
-   subroutine close_concentration_nc()
-      use netcdf
-      use netcdf_utils, only: nchandle_error
-      integer :: retval
-      ! Close the NetCDF file
-      retval = nf90_close(output_ncid)
-      call nchandle_error(retval, 'Error: Could not close the NetCDF file')
-
-   end subroutine close_concentration_nc
-
 
 end module modfields
+
+

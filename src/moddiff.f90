@@ -28,7 +28,16 @@ contains
       endif
    end subroutine init_diff
 
-!    subroutine diffc (a_in,a_out,flux)
+   subroutine apply_diff()
+      use modtracer, only: c0,cp
+      use modglobal, only: nsv
+      integer :: i
+      do i = 1, nsv
+         call diffc(c0(:,:,:,i),cp(:,:,:,i))
+      end do
+   end subroutine apply_diff
+
+   !    subroutine diffc (a_in,a_out,flux)
    subroutine diffc (a_in,a_out)
 
       use modglobal, only : i1,ih,i2,j1,jh,j2,k1,kmax,dx2i,dzf,dy2i,dzh

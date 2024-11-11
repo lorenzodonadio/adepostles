@@ -11,6 +11,18 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Set compiler flags for Fortran
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -Wall -Wextra -std=f2008 -fPIC -fcheck=all -fbacktrace -fmax-errors=3 -g")
 
+# Find MPI package (this includes mpi_f08 support if available)
+find_package(MPI REQUIRED)
+
+if(MPI_FOUND)
+    message(STATUS "MPI found: ${MPI_Fortran_COMPILER}")
+    set(CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER})  # Use the MPI-enabled Fortran compiler
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
+    include_directories(${MPI_Fortran_INCLUDE_PATH})      # Include MPI paths
+    link_libraries(${MPI_Fortran_LIBRARIES})              # Link MPI libraries
+else()
+    message(FATAL_ERROR "MPI not found. Please ensure MPI is installed and mpi_f08 is available.")
+endif()
 
 # Check if the environment variables for NetCDF are set, otherwise use nf-config
 if(DEFINED ENV{NETCDF_INCLUDE} AND DEFINED ENV{NETCDF_LIB})

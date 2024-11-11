@@ -18,6 +18,7 @@ module config
    real :: output_save_interval = 20. !< how many seconds between save of concentration output
    integer :: field_load_chunk_size = 100    ! Sensible default
    character(len=256) :: field_dump_path = ''  ! Must be specified
+   character(len=256) :: sources_prefix = ''  ! Must be specified
    character(len=256) :: outputfile_path = 'concentration_out.nc'  ! Must be specified
 
    ! Configuration variables for &IBM namelist
@@ -32,7 +33,7 @@ contains
       integer :: ios
       ! Namelists for the configuration
       namelist /RUN/ iexpnr, runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
-         field_load_chunk_size, field_dump_path
+         field_load_chunk_size, field_dump_path,sources_prefix
       namelist /IBM/ lapplyibm, ibm_input_file
 
 
