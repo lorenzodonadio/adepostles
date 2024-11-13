@@ -36,12 +36,13 @@ program adepostles
       call load_fields_intimeloop
       call interpolate_fields_to_simtime
 
+      call apply_source
+
       call apply_diff
       ! call advecc_kappa(c0,cp)
       call apply_advection
 
       call time_step
-      call apply_source
       call apply_ibm
       call apply_bc
       !   stop 'ACTUALLY ALL GOOD :)'

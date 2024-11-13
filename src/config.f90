@@ -33,7 +33,7 @@ contains
       integer :: ios
       ! Namelists for the configuration
       namelist /RUN/ iexpnr, runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
-         field_load_chunk_size, field_dump_path,sources_prefix
+         field_load_chunk_size, field_dump_path,sources_prefix, outputfile_path
       namelist /IBM/ lapplyibm, ibm_input_file
 
 

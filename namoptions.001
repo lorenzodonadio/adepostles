@@ -8,6 +8,7 @@ rkmethod = 2
 field_load_chunk_size = 20
 field_dump_path = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/utrecht_ideal_save/completefielddump.nc"
 sources_prefix = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/tracer_profile"
+outputfile_path = "concentration_out.nc"
 output_save_interval = 10
 /
 &IBM
