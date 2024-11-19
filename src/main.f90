@@ -6,7 +6,7 @@ program adepostles
    use modadvect, only: apply_advection
    use moddiff,only: init_diff,apply_diff
    use modboundary, only: apply_bc
-   use modibm, only : init_ibm,apply_ibm
+   use modibm, only : init_ibm,apply_ibm,enforce_zero_ibm
    use modtracer, only: load_tracer_init_and_sources,init_concentration_output_nc,&
       write_concentration_timeloop,close_concentration_nc,apply_source
    use modmpi, only: init_mpi,exit_mpi
@@ -41,10 +41,11 @@ program adepostles
       call apply_diff
       ! call advecc_kappa(c0,cp)
       call apply_advection
+      call apply_ibm
 
       call time_step
-      call apply_ibm
       call apply_bc
+      call enforce_zero_ibm
       !   stop 'ACTUALLY ALL GOOD :)'
 
    end do

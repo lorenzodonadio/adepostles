@@ -41,7 +41,7 @@ contains
    subroutine diffc (a_in,a_out)
 
       use modglobal, only : i1,ih,i2,j1,jh,j2,k1,kmax,dx2i,dzf,dy2i,dzh
-      use modfields, only : rhobf,rhobfi,rhobh,ekh0 !ksfc
+      use modfields, only : rhobf,rhobfi,rhobh,ekh0,ksfc
       implicit none
 
       real(real32), intent(in)    :: a_in(2-ih:i1+ih,2-jh:j1+jh,k1)
@@ -56,10 +56,9 @@ contains
          jm=j-1
 
          do i=2,i1
-            ! kmin = ksfc(i,j)
-!cibm       do k=2,kmax
-            ! do k=kmin+1,kmax
-            do k=2,kmax
+            kmin = ksfc(i,j)
+            do k=kmin+1,kmax
+               ! do k=2,kmax
                kp=k+1
                km=k-1
 
@@ -84,18 +83,18 @@ contains
 
       do j=2,j1
          do i=2,i1
-            ! kmin = ksfc(i,j)
-            kmin = 1
-            a_out(i,j,kmin) = a_out(i,j,kmin) &
+            k = ksfc(i,j) !special treatment for k = kmin, first vertical cell
+            ! k = 1
+            a_out(i,j,k) = a_out(i,j,k) &
                + 0.5 * ( &
-               ( (ekh0(i+1,j,kmin)+ekh0(i,j,kmin))*(a_in(i+1,j,kmin)-a_in(i,j,kmin)) &
-               -(ekh0(i,j,kmin)+ekh0(i-1,j,kmin))*(a_in(i,j,kmin)-a_in(i-1,j,kmin)) )*dx2i * anis_fac(kmin) &
+               ( (ekh0(i+1,j,k)+ekh0(i,j,k))*(a_in(i+1,j,k)-a_in(i,j,k)) &
+               -(ekh0(i,j,k)+ekh0(i-1,j,k))*(a_in(i,j,k)-a_in(i-1,j,k)) )*dx2i * anis_fac(k) &
                + &
-               ( (ekh0(i,j+1,kmin)+ekh0(i,j,kmin))*(a_in(i,j+1,kmin)-a_in(i,j,kmin)) &
-               -(ekh0(i,j,kmin)+ekh0(i,j-1,kmin))*(a_in(i,j,kmin)-a_in(i,j-1,kmin)) )*dy2i * anis_fac(kmin) &
+               ( (ekh0(i,j+1,k)+ekh0(i,j,k))*(a_in(i,j+1,k)-a_in(i,j,k)) &
+               -(ekh0(i,j,k)+ekh0(i,j-1,k))*(a_in(i,j,k)-a_in(i,j-1,k)) )*dy2i * anis_fac(k) &
                + &
-               ( rhobh(kmin+1)/rhobf(kmin) * (dzf(kmin+1)*ekh0(i,j,kmin) + dzf(kmin)*ekh0(i,j,kmin+1)) &
-               *  (a_in(i,j,kmin+1)-a_in(i,j,kmin)) / dzh(kmin+1)**2 )/dzf(kmin))
+               ( rhobh(k+1)/rhobf(k) * (dzf(k+1)*ekh0(i,j,k) + dzf(k)*ekh0(i,j,k+1)) &
+               *  (a_in(i,j,k+1)-a_in(i,j,k)) / dzh(k+1)**2 )/dzf(k))
             !    + &
             !    ( rhobh(kmin+1)/rhobf(kmin) * (dzf(kmin+1)*ekh0(i,j,kmin) + dzf(kmin)*ekh0(i,j,kmin+1)) &
             !    *  (a_in(i,j,kmin+1)-a_in(i,j,kmin)) / dzh(kmin+1)**2 &

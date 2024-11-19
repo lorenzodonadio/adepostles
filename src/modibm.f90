@@ -8,13 +8,14 @@ module modibm
 !    integer,allocatable :: inorm_west(:,:),inorm_east(:,:),inorm_south(:,:),inorm_north(:,:),inorm_top(:,:)
    integer,allocatable :: inorm_ibm(:,:)
    integer,allocatable :: coordsibm(:,:)
-   integer :: num_coords = 0
+   integer :: num_coords = 0 !< number of points inside ibm, equal to columns of coordsibm
 
 contains
 
    subroutine init_ibm()
       use config, only: lapplyibm,ibm_input_file,ifinputibm
       use modglobal, only: i1,ih,j1,jh,k1,kh,kmax,zm,zt !zm = zh omgg
+      use modfields, only: ksfc
       real(real32), allocatable :: bc_height(:,:)     !< Height of immersed boundary at grid pos x,y
       integer,allocatable :: temp(:,:) !> for storing the coordinates
       integer       :: i, j, k, nsize
@@ -58,6 +59,7 @@ contains
          do j=2,j1
             do k=1,kmax
                if (zt(k) <= bc_height(i,j)) then
+                  !    if (zm(k) < bc_height(i,j)) then
                   libm (i,j,k) = .true.
 
                   ! Increment the number of coordinates
@@ -79,7 +81,7 @@ contains
                   coordsibm(3, num_coords) = k
 
                   !   TODO make use of ksfc, mainly to improve diffusion loop
-                  !   ksfc (i,j)   = k + 1   !half (flux) level
+                  ksfc (i,j)   = k + 1   !half (flux) level
                   !   if (ksfc(i,j).gt.kibm_maxl) then
                   !      kibm_maxl = k
                   !   endif
@@ -107,21 +109,16 @@ contains
       do k=2,kmax
          do j=2,j1
             do i=2,i1
-               !WEST
                if (libm(i,j,k) .and. .not.libm(i-1,j,k)) then
-                  nsize = nsize + 1
-                  !EAST
+                  nsize = nsize + 1 !WEST
                elseif(libm(i,j,k) .and. .not.libm(i+1,j,k)) then
-                  nsize = nsize + 1
-                  !SOUTH
+                  nsize = nsize + 1 !EAST
                elseif (libm(i,j,k) .and. .not.libm(i,j-1,k)) then
-                  nsize = nsize + 1
-                  !NORTH
+                  nsize = nsize + 1  !SOUTH
                elseif (libm(i,j,k) .and. .not.libm(i,j+1,k)) then
-                  nsize = nsize + 1
-                  !TOP
+                  nsize = nsize + 1  !NORTH
                elseif (libm(i,j,k) .and. .not.libm(i,j,k+1)) then
-                  nsize = nsize + 1
+                  nsize = nsize + 1 !TOP
                endif
             end do
          end do
@@ -162,28 +159,38 @@ contains
    end subroutine init_ibm
 
    subroutine apply_ibm()
-      use modglobal, only: i1,j1,kmax,nsv
-      use modtracer, only: c0
-      integer       :: i, j, k, n, nboundary
+      use modglobal, only: i1,j1,kmax,nsv,dx2i,dy2i
+      use modtracer, only: c0,cp
+      use modfields, only: ekh0
+      integer       :: i, j, k, n, btype, nboundary
       real          :: cwest,ceast,csouth,cnorth,ctop,csum
-      do n = 1, nsv
 
+      do n = 1, nsv
          do nboundary = 1, size(inorm_ibm,2)
             i = inorm_ibm(1,nboundary)
             j = inorm_ibm(2,nboundary)
             k = inorm_ibm(3,nboundary)
-
-            if (c0(i,j,k,n) > 1e-6) then
-               ! write(*,*) i,j,k,c0(i,j,k)
-               csum = c0(i+1,j,k,n)+c0(i-1,j,k,n)+c0(i,j+1,k,n)+c0(i,j-1,k,n)+c0(i,j,k+1,n)
-               c0(i+1,j,k,n) = c0(i+1,j,k,n)*c0(i,j,k,n)/csum
-               c0(i-1,j,k,n) = c0(i-1,j,k,n)*c0(i,j,k,n)/csum
-               c0(i,j+1,k,n) = c0(i,j+1,k,n)*c0(i,j,k,n)/csum
-               c0(i,j-1,k,n) = c0(i,j-1,k,n)*c0(i,j,k,n)/csum
-               c0(i,j,k+1,n) = c0(i,j,k+1,n)*c0(i,j,k,n)/csum
-            endif
+            btype = inorm_ibm(4,nboundary)
+            select case (btype)
+             case(1) !WEST
+               cp(i-1,j,k,n) = 0.5 * (ekh0(i,j,k)+ekh0(i-1,j,k))*c0(i-1,j,k,n)*dx2i
+             case(2) !EAST
+               cp(i+1,j,k,n) = 0.5 * (ekh0(i,j,k)+ekh0(i+1,j,k))*c0(i+1,j,k,n)*dx2i
+             case(3) !SOUTH
+               cp(i,j-1,k,n) = 0.5 * (ekh0(i,j,k)+ekh0(i,j-1,k))*c0(i,j-1,k,n)*dy2i
+             case(4) !NORTH
+               cp(i,j+1,k,n) = 0.5 * (ekh0(i,j,k)+ekh0(i,j+1,k))*c0(i,j+1,k,n)*dy2i
+            end select
+            !The top case is not necessary since the diffc subroutine does not diffuse into the bottom direction for the first cell, thanks for ksfc
          end do
       end do
+
+
+   end subroutine apply_ibm
+
+   subroutine enforce_zero_ibm()
+      use modtracer, only: c0
+      integer       :: i, j, k, n
 
       do n = 1, num_coords
          i = coordsibm(1,n)
@@ -191,8 +198,7 @@ contains
          k = coordsibm(3,n)
          c0(i,j,k,:) = 0
       end do
-
-   end subroutine apply_ibm
+   end subroutine enforce_zero_ibm
 end module modibm
 
 !subroutine with all the boundaries, but i think we dont even need that to be soo complex

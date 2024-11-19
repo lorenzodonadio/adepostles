@@ -12,6 +12,7 @@ module modfields
    real(real32), allocatable :: rhobf(:)   !< density full level (zf)
    real(real32), allocatable :: rhobfi(:)  !< inverse density full level (zf)
    real(real32), allocatable :: rhobh(:)   !< density half level (zh)
+   integer,allocatable :: ksfc(:,:) !< Kmin of the surface level, for IBM, default is 1, allocated in modfields but ibm_init fills it according to the surface heigh
 
    real(real32), allocatable :: ekh(:,:,:,:) !< k-coefficient for eddy diffusivity ekh(xt,yt,zt,time) m2/s
    real(real32), allocatable :: u(:,:,:,:)   !< u(xm,yt,zt,time) m/s
@@ -108,6 +109,8 @@ contains
       allocate(rhobf(k1))
       allocate(rhobfi(k1))
       allocate(rhobh(k1))
+      allocate(ksfc     (2-ih:i1+ih,2-jh:j1+jh))
+      ksfc = 1 !this is the default value, if not IBM, then all k-loops are executed from k=ksfc=1
 
       allocate(ekh  (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
       allocate(u    (2-ih:i1+ih,2-jh:j1+jh,k1,field_load_chunk_size))
