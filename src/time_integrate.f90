@@ -22,7 +22,7 @@ contains
    end subroutine allocate_k
 
    subroutine increase_simtime(in_dt)
-      use modglobal, only: simtime, tres, rsts
+      use modglobal, only: simtime, tres, rsts,dt
       integer, intent(in) :: in_dt
 
       simtime = simtime + in_dt     ! microseconds
@@ -177,7 +177,7 @@ contains
    end subroutine rk4_step
 
    subroutine adaptative_dt()
-      use config, only: rkmethod
+      use config, only: rkmethod,vonneumann_limit,courant_limit
       use modglobal, only: dxi,dyi,dzi,dx2i,dy2i,dz2i,dzh,luniformz,i1,j1,k1,dt,tres
       use modfields, only: u0,v0,w0,ekh0
       real :: cfl,vnm,cfl_limit,vn_limit
@@ -185,23 +185,35 @@ contains
       integer :: maxdt
 
       ! Set stability limits based on RK method
-      select case(rkmethod)
-       case(1)  ! RK1
-         ! cfl_limit = 1.0
-         cfl_limit = 0.9
-         vn_limit = 0.5
-       case(2)  ! RK2
-         cfl_limit = 0.95
-         vn_limit = 1.0
-       case(3)  ! RK3
-         ! cfl_limit = 1.73  ! sqrt(3) and a bit less
-         cfl_limit = 0.9
-         vn_limit = 1.36
-       case(4)  ! RK4
-         ! cfl_limit = 2.  ! sqrt(8) = 2.82 and a bit less
-         cfl_limit = 0.9  ! sqrt(8) and a bit less
-         vn_limit = 2.78
-      end select
+      if (vonneumann_limit > 0) then
+         vn_limit = vonneumann_limit ! user defined limit
+      else
+         select case(rkmethod)
+          case(1)  ! RK1
+            vn_limit = 0.4
+          case(2)  ! RK2
+            vn_limit = 0.9
+          case(3)  ! RK3
+            vn_limit = 1.36
+          case(4)  ! RK4
+            vn_limit = 2.78
+         end select
+      endif
+
+      if (courant_limit > 0) then
+         cfl_limit = courant_limit ! user defined limit
+      else
+         select case(rkmethod)
+          case(1)  ! RK1
+            cfl_limit = 0.35
+          case(2)  ! RK2
+            cfl_limit = 0.45
+          case(3)  ! RK3
+            cfl_limit = 0.9 ! cfl_limit = 1.73  ! sqrt(3) and a bit less
+          case(4)  ! RK4
+            cfl_limit = 0.9  ! sqrt(8) = 2.82 and a bit less
+         end select
+      endif
 
       if (luniformz) then
          mydzi = dzi
@@ -212,10 +224,21 @@ contains
       endif
 
       ! Calculate CFL and VN numbers (now multiplied by their limits)
-      cfl = cfl_limit/maxval((u0(2:i1,2:j1,2:k1)*dxi+v0(2:i1,2:j1,2:k1)*dyi+w0(2:i1,2:j1,2:k1)*mydzi))
-      vnm = vn_limit*maxval((ekh0(2:i1,2:j1,2:k1)*(dx2i + dy2i + mydz2i)))
+      cfl = cfl_limit/maxval(abs((u0(2:i1,2:j1,2:k1)*dxi+v0(2:i1,2:j1,2:k1)*dyi+w0(2:i1,2:j1,2:k1)*mydzi)))
+      vnm = vn_limit*maxval(abs((ekh0(2:i1,2:j1,2:k1)*(dx2i + dy2i + mydz2i))))
 
       maxdt = int(min(cfl,vnm)/tres)
+
+      if (maxdt <= 0.0) then
+         write(*,*) "maxdt: ", maxdt, "s"
+         write(*,*) "cfl: ", cfl
+         write(*,*) "cfl_limit: ", cfl_limit
+         write(*,*) "vnm: ", vnm
+         write(*,*) "vn_limit: ", vn_limit
+         write(*,*) "max u,v,w: ", maxval(abs(u0)),maxval(abs(v0)),maxval(abs(w0))
+         stop 'MAXDF SMALLER EQUAL 0'
+      endif
+
       if (dt<maxdt) then
          dt = int(0.85*maxdt+0.15*dt)
       else

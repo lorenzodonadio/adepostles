@@ -58,6 +58,7 @@ contains
 
       dt = min(int(dtmax/tres),dt) !dtmax comes from namoptions and its in seconds
 
+      write (*,*) "init dt: ", dt, "ms"
       next_save = output_save_interval
 
       i1 = imax +1

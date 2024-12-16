@@ -8,24 +8,38 @@ module config
    integer, parameter :: ifnamopt = 40      ! Unit number for optional namelist files
 
    ! Configuration variables for &RUN namelist
-   logical :: ladaptivedt = .false.          ! Sensible default
-   logical :: lanisotrop = .true.
-   logical :: lperiodic_field_pad = .true.  !< if to use periodic BC for reconstructing the field ghost cells, if set to false it uses interpolation
-   integer :: rkmethod = 1                   !< 1. euler, 2.heun, 3.rk3, 4. rk4
-   integer :: iexpnr = -1                    ! Default value indicates it must be specified
-   integer :: runtime = 25                   !< seconds
-   real :: dtmax = 1.                      !< seconds
-   real :: output_save_interval = 20. !< how many seconds between save of concentration output
-   integer :: field_load_chunk_size = 100    ! Sensible default
+   ! /RUN/
+
    character(len=256) :: field_dump_path = ''  ! Must be specified
    character(len=256) :: sources_prefix = ''  ! Must be specified
    character(len=256) :: outputfile_path = 'concentration_out.nc'  ! Must be specified
 
+   logical :: ladaptivedt = .false.          ! Sensible default
+   logical :: lanisotrop = .true.
+   logical :: lperiodic_field_pad = .true.  !< if to use periodic BC for reconstructing the field ghost cells, if set to false it uses interpolation
+
+   integer :: rkmethod = 1                   !< 1. euler, 2.heun, 3.rk3, 4. rk4
+   integer :: iexpnr = -1                    ! Default value indicates it must be specified
+   integer :: runtime = 25                   !< seconds
+   integer :: field_load_chunk_size = 100    ! Sensible default
+
+   real :: dtmax = 1.                      !< seconds
+   real :: output_save_interval = 20. !< how many seconds between save of concentration output
+
+   real :: courant_limit = -1 !< CFL criterion, default is -1 so we use the hard coded value in time_integrate.f90
+   real :: vonneumann_limit = -1  !< Von Neuman criterion, default is -1 so we use the hard coded value in time_integrate.f90
+
    ! Configuration variables for &IBM namelist
+   ! /IBM/
    logical :: lapplyibm = .false.                 ! Sensible default
    character(len=256) :: ibm_input_file = ''   ! Must be specified
 
    !other flags
+
+   ! /BOUNDARY/
+   ! 11: Neumann 1st Order, 12: Neumann 2nd Order, 2: Periodic
+   integer :: xboundary = 1
+   integer :: yboundary = 2
 contains
 
    subroutine read_config_file()
@@ -33,8 +47,11 @@ contains
       integer :: ios
       ! Namelists for the configuration
       namelist /RUN/ iexpnr, runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
-         field_load_chunk_size, field_dump_path,sources_prefix, outputfile_path
+         field_load_chunk_size, field_dump_path,sources_prefix, outputfile_path, courant_limit, vonneumann_limit
+
       namelist /IBM/ lapplyibm, ibm_input_file
+
+      namelist /BOUNDARY/ xboundary, yboundary
 
 
       if (command_argument_count() >=1) then

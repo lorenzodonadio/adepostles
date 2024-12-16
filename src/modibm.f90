@@ -14,7 +14,7 @@ contains
 
    subroutine init_ibm()
       use config, only: lapplyibm,ibm_input_file,ifinputibm
-      use modglobal, only: i1,ih,j1,jh,k1,kh,kmax,zm,zt !zm = zh omgg
+      use modglobal, only: i1,ih,j1,jh,k1,kmax,zt !zt = zf omgg
       use modfields, only: ksfc
       real(real32), allocatable :: bc_height(:,:)     !< Height of immersed boundary at grid pos x,y
       integer,allocatable :: temp(:,:) !> for storing the coordinates
@@ -159,11 +159,10 @@ contains
    end subroutine init_ibm
 
    subroutine apply_ibm()
-      use modglobal, only: i1,j1,kmax,nsv,dx2i,dy2i
+      use modglobal, only: nsv,dx2i,dy2i
       use modtracer, only: c0,cp
       use modfields, only: ekh0
       integer       :: i, j, k, n, btype, nboundary
-      real          :: cwest,ceast,csouth,cnorth,ctop,csum
 
       do n = 1, nsv
          do nboundary = 1, size(inorm_ibm,2)
@@ -204,7 +203,7 @@ end module modibm
 !subroutine with all the boundaries, but i think we dont even need that to be soo complex
 !    subroutine init_ibm()
 !       use config, only: lapplyibm,ibm_input_file,ifinputibm
-!       use modglobal, only: i1,ih,j1,jh,k1,kh,kmax,zm,zt !zm = zh omgg
+!       use modglobal, only: i1,ih,j1,jh,k1,khzm,zt !zm = zh omgg
 !       real(real32), allocatable :: bc_height(:,:)     !< Height of immersed boundary at grid pos x,y
 !       integer       :: i, j, k, ws, es,ss,ns,ts !, ierr,ii,jj,kk,n  !cstep , kmin
 !       character(128) :: readstring

@@ -29,6 +29,7 @@ program adepostles
    call load_tracer_init_and_sources
    call init_concentration_output_nc
 !    stop 'Init completed succesfully'
+   write (*,*) "Starting timeloop"
 
    do while (simtime < maxtime)
 

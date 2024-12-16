@@ -14,15 +14,15 @@ module modtracer
    real, allocatable :: c0(:,:,:,:)
    real, allocatable :: cp(:,:,:,:)
    real, allocatable :: source(:,:)
-   real, allocatable :: source_meta(:,:) !> contains i,j,k,tracernumber,sourcenumber,idx, corresponding to the source row that holds the actual time series data
+   integer, allocatable :: source_meta(:,:) !> contains i,j,k,tracernumber,sourcenumber,idx, corresponding to the source row that holds the actual time series data
    integer :: src_t_idx = 1
 contains
    !       allocate(c0   (2-ih:i1+ih,2-jh:j1+jh,k1))
    ! allocate(cp   (2-ih:i1+ih,2-jh:j1+jh,k1))
    ! allocate(cm   (2-ih:i1+ih,2-jh:j1+jh,k1))
    subroutine apply_source()
-      use modglobal, only: nsv,rtime,rsts
-      integer :: nsrc,i,j,k,sv,timerow
+      use modglobal, only: rtime,rsts
+      integer :: nsrc,i,j,k,sv
 
       if (rsts > rtime(src_t_idx)) src_t_idx = src_t_idx + 1
 
@@ -46,6 +46,7 @@ contains
 
    subroutine load_tracer_init_and_sources()
       use netcdf_utils, only: nchandle_error
+      use modutils, only: str_ends_with
       use modglobal, only: i1,ih,j1,jh,k1,time_size,nsv
       use config, only: sources_prefix
       use mpi_f08
@@ -72,8 +73,13 @@ contains
       endif
 
       ! Format the sources_path based on my_id
-      write(sources_path, '(A,"_",I3.3,".nc")') trim(sources_prefix), my_id + 1
-      print *, sources_path
+      sources_path = trim(sources_prefix)
+
+      if (.not.str_ends_with(sources_path,'.nc')) then
+         write(sources_path, '(A,"_",I3.3,".nc")') trim(sources_prefix), my_id + 1
+      endif
+
+      print *,'Sources File: ', sources_path
       retval = nf90_open(sources_path, nf90_nowrite, ncid)
       call nchandle_error(retval, 'Error: Could not open NetCDF file'//sources_path)
       retval = nf90_get_att(ncid, nf90_global, 'numtracers', nsv)

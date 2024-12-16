@@ -1,15 +1,15 @@
 &RUN
 iexpnr     =  001
-runtime    =  100
+runtime    =  500
 dtmax      =  1
 ladaptivedt  =  .true.
 lanisotrop = .true.
 rkmethod = 2
-field_load_chunk_size = 20
-field_dump_path = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/utrecht_ideal_save/completefielddump.nc"
-sources_prefix = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/tracer_profile"
-outputfile_path = "../output/concentration_out.nc"
-output_save_interval = 2
+field_load_chunk_size = 14
+field_dump_path = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/northwind/fielddump_60s.nc"
+sources_prefix = "/home/lorenzolds/Desktop/phd/dales_stuff/utrecht_result_data/northwind/tracer_inp_60s.nc"
+outputfile_path = "../output/concentration_out_60s.nc"
+output_save_interval = 10
 /
 &IBM
 lapplyibm = .true.

@@ -48,7 +48,8 @@ contains
 
       ! if the simtime is greater than the time at that index, increment the index
       ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
-      if (rsts > chunktime(nti)) then
+ 
+      if (rsts >= chunktime(nti)) then
          nti = nti+1
 
          um = up
@@ -60,17 +61,18 @@ contains
          vp = v(:,:,:,nti)
          wp = w(:,:,:,nti)
          ekhp = ekh(:,:,:,nti)
-
          dtfield = chunktime(nti)-chunktime(nti-1)
       endif
-
+      
       ! for now simple linear interpolation, TODO improve this
       ! the time from simulation to the next point divided by dt of the field
+  
       d = (chunktime(nti) - rsts) / dtfield
       u0 = up*(1-d)+um*d
       v0 = vp*(1-d)+vm*d
       w0 = wp*(1-d)+wm*d
       ekh0 = ekhp*(1-d)+ekhm*d
+
       !TODO make a better handling profiles interpolation at nti ==1
       if (nti == 1) then
          ! to calculate the distance use a combination of old and new dtfield, only needed if irregulat timestep and even so i doubt it
@@ -147,6 +149,7 @@ contains
       use modglobal, only :rtime
       call load_fields_chunk(field_dump_path,1)
 
+      
       up = u(:,:,:,1)
       vp = v(:,:,:,1)
       wp = w(:,:,:,1)
