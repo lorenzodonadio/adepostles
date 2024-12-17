@@ -48,7 +48,7 @@ contains
 
       ! if the simtime is greater than the time at that index, increment the index
       ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
- 
+
       if (rsts >= chunktime(nti)) then
          nti = nti+1
 
@@ -57,16 +57,22 @@ contains
          wm = wp
          ekhm = ekhp
 
+         !TODO investigate this error: that sometimes happens
+         !Saved concentration Field at:    40.0000000  it happened then.
+         ! so the equals is not great practice. but needed for time =  0.0000000
+         !At line 60 of file /scratch/ldonadio/adepostles/src/modfields.f90
+         !Fortran runtime error: Index '6' of dimension 4 of array 'u' outside of expected range (1:5)
+
          up = u(:,:,:,nti)
          vp = v(:,:,:,nti)
          wp = w(:,:,:,nti)
          ekhp = ekh(:,:,:,nti)
          dtfield = chunktime(nti)-chunktime(nti-1)
       endif
-      
+
       ! for now simple linear interpolation, TODO improve this
       ! the time from simulation to the next point divided by dt of the field
-  
+
       d = (chunktime(nti) - rsts) / dtfield
       u0 = up*(1-d)+um*d
       v0 = vp*(1-d)+vm*d
@@ -149,7 +155,7 @@ contains
       use modglobal, only :rtime
       call load_fields_chunk(field_dump_path,1)
 
-      
+
       up = u(:,:,:,1)
       vp = v(:,:,:,1)
       wp = w(:,:,:,1)
