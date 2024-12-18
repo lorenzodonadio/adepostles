@@ -50,13 +50,10 @@ contains
       ! if the simtime is greater than the time at that index, increment the index
       ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
       ! for simulations that have first index and time at 0 we need to use next chunk
-      ! if (rsts > chunktime(nti)) then
-      !    use_next_chunk = .true.
-      ! else if (rsts == 0.0 .and. chunktime(nti) == 0.0) then
-      !    use_next_chunk =  .true.
-      ! endif
 
       if (rsts >= chunktime(nti) .and. nti<=field_load_chunk_size) then
+         write(*,*) "interp fields to simtime, Update fields to next chunk"
+         write(*,*) "nti: ", nti, " rsts: ", rsts," chunktimenti: ", chunktime(nti)
          nti = nti+1
 
          um = up
