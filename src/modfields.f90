@@ -44,24 +44,25 @@ contains
       use config, only: field_load_chunk_size
       use modglobal, only: rsts
       real  :: d !< distance to the next point in -1,0 space
+      logical :: use_next_chunk = .false.
       !this happens only once per simulation, maybe solve with an initial field, DALES does not save the sim at time = 0
 
       ! if the simtime is greater than the time at that index, increment the index
       ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
+      ! for simulations that have first index and time at 0 we need to use next chunk
+      if (rsts > chunktime(nti)) then
+         use_next_chunk = .true.
+      else if (rsts == 0.0 .and. chunktime(nti) == 0.0) then
+         use_next_chunk =  .true.
+      endif
 
-      if (rsts >= chunktime(nti)) then
+      if (use_next_chunk) then
          nti = nti+1
 
          um = up
          vm = vp
          wm = wp
          ekhm = ekhp
-
-         !TODO investigate this error: that sometimes happens
-         !Saved concentration Field at:    40.0000000  it happened then.
-         ! so the equals is not great practice. but needed for time =  0.0000000
-         !At line 60 of file /scratch/ldonadio/adepostles/src/modfields.f90
-         !Fortran runtime error: Index '6' of dimension 4 of array 'u' outside of expected range (1:5)
 
          up = u(:,:,:,nti)
          vp = v(:,:,:,nti)
