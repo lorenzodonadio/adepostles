@@ -51,9 +51,7 @@ contains
       ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
       ! for simulations that have first index and time at 0 we need to use next chunk
 
-      if (rsts >= chunktime(nti) .and. nti<=field_load_chunk_size) then
-         write(*,*) "interp fields to simtime, Update fields to next chunk"
-         write(*,*) "nti: ", nti, " rsts: ", rsts," chunktimenti: ", chunktime(nti),  "fieldloadchunksize: ", field_load_chunk_size
+      if (rsts >= chunktime(nti) .and. nti<field_load_chunk_size) then
          nti = nti+1
 
          um = up
