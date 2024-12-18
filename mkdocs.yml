@@ -1,2 +1,4 @@
 site_name: ADEpostLES Docs
-color_mode: dark
+theme:
+  name: mkdocs
+  color_mode: dark

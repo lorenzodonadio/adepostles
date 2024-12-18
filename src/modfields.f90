@@ -44,19 +44,19 @@ contains
       use config, only: field_load_chunk_size
       use modglobal, only: rsts
       real  :: d !< distance to the next point in -1,0 space
-      logical :: use_next_chunk = .false.
+      ! logical :: use_next_chunk = .false.
       !this happens only once per simulation, maybe solve with an initial field, DALES does not save the sim at time = 0
 
       ! if the simtime is greater than the time at that index, increment the index
       ! the index can not be greater than field_load_chunk_size, this is done by resetting to 1 every load fields
       ! for simulations that have first index and time at 0 we need to use next chunk
-      if (rsts > chunktime(nti)) then
-         use_next_chunk = .true.
-      else if (rsts == 0.0 .and. chunktime(nti) == 0.0) then
-         use_next_chunk =  .true.
-      endif
+      ! if (rsts > chunktime(nti)) then
+      !    use_next_chunk = .true.
+      ! else if (rsts == 0.0 .and. chunktime(nti) == 0.0) then
+      !    use_next_chunk =  .true.
+      ! endif
 
-      if (use_next_chunk) then
+      if (rsts >= chunktime(nti) .and. nti<=field_load_chunk_size) then
          nti = nti+1
 
          um = up
@@ -69,6 +69,13 @@ contains
          wp = w(:,:,:,nti)
          ekhp = ekh(:,:,:,nti)
          dtfield = chunktime(nti)-chunktime(nti-1)
+      endif
+
+      if (rsts > chunktime(nti)) then
+         write(*,*) "WARNING: Simulation time exceeded the last loaded chunk of fields, might be running with outdated fields"
+         write(*,*) "rsts: ", rsts
+         write(*,*) "nti: ", nti
+         write(*,*) "chunktime(nti): ", chunktime(nti)
       endif
 
       ! for now simple linear interpolation, TODO improve this
