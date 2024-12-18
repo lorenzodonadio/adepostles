@@ -53,7 +53,7 @@ contains
 
       if (rsts >= chunktime(nti) .and. nti<=field_load_chunk_size) then
          write(*,*) "interp fields to simtime, Update fields to next chunk"
-         write(*,*) "nti: ", nti, " rsts: ", rsts," chunktimenti: ", chunktime(nti)
+         write(*,*) "nti: ", nti, " rsts: ", rsts," chunktimenti: ", chunktime(nti),  "fieldloadchunksize: ", field_load_chunk_size
          nti = nti+1
 
          um = up
