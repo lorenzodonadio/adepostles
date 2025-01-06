@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en" data-bs-theme="dark">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -15,8 +15,8 @@
         <link href="/css/solid.min.css" rel="stylesheet">
         <link href="/css/v4-font-face.min.css" rel="stylesheet">
         <link href="/css/base.css" rel="stylesheet">
-        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
-        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" disabled>
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" >
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
         <script>hljs.highlightAll();</script> 
     </head>
@@ -35,17 +35,31 @@
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
                             <li class="nav-item">
-                                <a href="/." class="nav-link">Welcome to MkDocs</a>
+                                <a href="/." class="nav-link">Welcome</a>
                             </li>
                             <li class="nav-item">
-                                <a href="/something/" class="nav-link">Something</a>
+                                <a href="/installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/run/" class="nav-link">Run</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/namoptions/" class="nav-link">Configuration</a>
                             </li>
                             <li class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Nested</a>
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Utilities</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
-    <a href="/nested/something/" class="dropdown-item">Something</a>
+    <a href="/utilities/gensources/" class="dropdown-item">Generate Sources</a>
+</li>
+                                    
+<li>
+    <a href="/utilities/postprocesdales/" class="dropdown-item">PostProcess DALES</a>
+</li>
+                                    
+<li>
+    <a href="/utilities/visualizations/" class="dropdown-item">Visualize Results</a>
 </li>
                                 </ul>
                             </li>
@@ -61,6 +75,7 @@
                 </div>
             </div>
         </div>
+        <script src="/js/darkmode.js"></script>
 
         <div class="container">
             <div class="row">
