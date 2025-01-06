@@ -1,6 +1,6 @@
 # adepostles
 
-DOCS:
+full docs [here](https://lorenzodonadio.github.io/adepostles/)
 
 The **Advection Diffusion Equation Post Large Eddy Simulation** (adepostles) code solves tracer transport as a post processing step to LES simulations.
 
