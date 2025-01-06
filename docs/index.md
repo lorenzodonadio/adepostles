@@ -4,16 +4,11 @@ The **Advection Diffusion Equation Post Large Eddy Simulation** (adepostles) cod
 
 It was initially developped to treat output from [DALES](https://github.com/dalesteam/dales), but the idea is to be able to post process a broad set of LES outputs, as long as they conform to NetCDF.
 
-## Commands
+## Features
 
-- `mkdocs new [dir-name]` - Create a new project.
-- `mkdocs serve` - Start the live-reloading docs server.
-- `mkdocs build` - Build the documentation site.
-- `mkdocs -h` - Print help message and exit.
+- IBM
+- MPI parallelization
+- NetCDF input/output format
 
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+> NOTE:<br>
+> The parallelization goal is to allow multiple initial conditions and source profiles to be calculated in parallel for the same LES simulation output

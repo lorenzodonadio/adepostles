@@ -2,3 +2,13 @@ site_name: ADEpostLES Docs
 theme:
   name: mkdocs
   color_mode: dark
+
+nav:
+  - index.md
+  - installation.md
+  - run.md
+  - Configuration: namoptions.md
+  - Utilities:
+      - Generate Sources: utilities/gensources.md
+      - PostProcess DALES: utilities/postprocesdales.md
+      - Visualize Results: utilities/visualizations.md

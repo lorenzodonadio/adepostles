@@ -159,10 +159,13 @@ contains
    end subroutine init_ibm
 
    subroutine apply_ibm()
+      use config, only: lapplyibm
       use modglobal, only: nsv,dx2i,dy2i
       use modtracer, only: c0,cp
       use modfields, only: ekh0
       integer       :: i, j, k, n, btype, nboundary
+
+      if (.not. lapplyibm) return
 
       do n = 1, nsv
          do nboundary = 1, size(inorm_ibm,2)
@@ -189,7 +192,10 @@ contains
 
    subroutine enforce_zero_ibm()
       use modtracer, only: c0
+      use config, only: lapplyibm
       integer       :: i, j, k, n
+
+      if (.not. lapplyibm) return
 
       do n = 1, num_coords
          i = coordsibm(1,n)
