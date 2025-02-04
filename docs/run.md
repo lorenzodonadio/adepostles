@@ -31,7 +31,7 @@ For **runs in parallel** ,i.e with multiple source files, then only the prefix t
 
 The IBM file is **not NetCDF** only because DALES still takes a text file as input for the IBM and it is important that the same file use for IBM in the LES is used for Adepostles.
 
-### Example files:
+## Example files
 
 **field_dump**
 Here is an example of the result of `ncdump -h` of a fielddump with the expected format:
@@ -96,7 +96,7 @@ group: s0 {
 
   // group attributes:
                 :tracname = "s0" ;
-                :traclong = "s0_x_  8_y_ 30" ;
+                :traclong = "s0_x_8_y_30" ;
                 :unit = "kg/kg" ;
                 :molar_mass = -999. ;
                 :lemis = "true" ;
@@ -113,7 +113,7 @@ group: s1 {
 
   // group attributes:
                 :tracname = "s1" ;
-                :traclong = "s1_x_  8_y_ 45" ;
+                :traclong = "s1_x_8_y_45" ;
                 :unit = "kg/kg" ;
                 :molar_mass = -999. ;
                 :lemis = "true" ;
