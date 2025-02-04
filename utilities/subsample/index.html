@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>Generate Sources - ADEpostLES Docs</title>
+        <title>Subsample - ADEpostLES Docs</title>
         <link href="../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../css/brands.min.css" rel="stylesheet">
@@ -47,7 +47,7 @@
                                 <a href="../../namoptions/" class="nav-link">Configuration</a>
                             </li>
                             <li class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Utilities</a>
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Utilities</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
@@ -55,7 +55,7 @@
 </li>
                                     
 <li>
-    <a href="./" class="dropdown-item active" aria-current="page">Generate Sources</a>
+    <a href="../gensources/" class="dropdown-item">Generate Sources</a>
 </li>
                                     
 <li>
@@ -75,16 +75,6 @@
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
-                            <li class="nav-item">
-                                <a rel="prev" href="../../namoptions/" class="nav-link">
-                                    <i class="fa fa-arrow-left"></i> Previous
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a rel="next" href="../postprocesdales/" class="nav-link">
-                                    Next <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </li>
                     </ul>
                 </div>
             </div>
@@ -103,107 +93,12 @@
     
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
-            
-            <li class="nav-item" data-bs-level="1"><a href="#tracer-generation-utility-for-netcdf-files" class="nav-link">Tracer Generation Utility for NetCDF Files</a>
-              <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#overview" class="nav-link">Overview</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#components" class="nav-link">Components</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#configuration-parameters" class="nav-link">Configuration Parameters</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#usage" class="nav-link">Usage</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#output" class="nav-link">Output</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#customization" class="nav-link">Customization</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#note" class="nav-link">Note</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-              </ul>
-            </li>
         </ul>
     </div>
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="tracer-generation-utility-for-netcdf-files">Tracer Generation Utility for NetCDF Files</h1>
-<h2 id="overview">Overview</h2>
-<p>This utility is designed to generate tracer source profiles for atmospheric or environmental modeling, specifically creating NetCDF files with point source emissions across multiple spatial and temporal dimensions.</p>
-<h2 id="components">Components</h2>
-<h3 id="1-sourcegenpy">1. <code>sourcegen.py</code></h3>
-<p>A Python module that provides core functionality for creating NetCDF tracer profiles:
-- Creates NetCDF files with tracer information
-- Supports adding multiple tracers
-- Allows definition of point sources for each tracer
-- Manages dimensions and metadata for tracer profiles</p>
-<h3 id="2-must_tracergenpy-example">2. <code>must_tracergen.py</code> (example)</h3>
-<p>The main script for generating tracer input files, <strong>modify this to match your needs</strong>:
-- Generates multiple tracer profiles based on predefined configurations
-- Supports parallel processing with configurable parameters
-- Creates multiple NetCDF files with point source emissions</p>
-<h3 id="3-gensourcesh">3. <code>gensource.sh</code></h3>
-<p>A shell script for running the tracer generation on a high-performance computing (HPC) environment:
-- Uses SLURM job scheduling
-- Configures environment and dependencies
-- Executes the tracer generation script</p>
-<h2 id="configuration-parameters">Configuration Parameters</h2>
-<p>Key configuration parameters in <code>must_tracergen.py</code>:
-- <code>tracers_per_core</code>: Number of tracers per computational core (default: 3)
-- <code>nproc</code>: Number of processors (default: 2)
-- <code>nruns</code>: Number of simulation runs (default: 11)
-- <code>z_idx_src</code>: Vertical index for point sources (default: 2)
-- <code>step_src_mat</code>: Source profile matrix defining emission values over time
-- <code>point_sources</code>: Array of point source coordinates</p>
-<h2 id="usage">Usage</h2>
-<h3 id="prerequisites">Prerequisites</h3>
-<ul>
-<li>Python 3.x</li>
-<li>Required libraries: </li>
-<li><code>numpy</code></li>
-<li><code>netCDF4</code></li>
-<li><code>tqdm</code></li>
-</ul>
-<h3 id="running-the-script">Running the Script</h3>
-<pre><code class="language-bash">python must_tracergen.py &lt;fielddump_netcdf_path&gt; --output_dir &lt;output_directory&gt;
-</code></pre>
-<p>Example:</p>
-<pre><code class="language-bash">python must_tracergen.py fielddump_10s.nc --output_dir ./tracers/
-</code></pre>
-<h3 id="hpc-deployment">HPC Deployment</h3>
-<p>The provided <code>gensource.sh</code> script can be used to submit the job to a SLURM-managed cluster:</p>
-<pre><code class="language-bash">sbatch gensource.sh
-</code></pre>
-<h2 id="output">Output</h2>
-<p>The script generates multiple NetCDF files in the specified output directory:
-- Filename format: <code>tracer_inp_XXX_YYY.nc</code>
-  - <code>XXX</code>: Run number (001-011)
-  - <code>YYY</code>: Processor number (001-002)</p>
-<p>Each file contains:
-- Tracer metadata
-- Point source emission profiles
-- Spatial and temporal emission information</p>
-<h2 id="customization">Customization</h2>
-<p>To modify the tracer generation:
-1. Adjust <code>point_sources</code> array to change source locations
-2. Modify <code>step_src_mat</code> to alter emission profiles
-3. Change <code>tracers_per_core</code>, <code>nproc</code>, and <code>nruns</code> to match your simulation requirements</p>
-<h2 id="note">Note</h2>
-<p>This utility is specifically designed for atmospheric or environmental modeling workflows that require detailed tracer source definition across multiple dimensions.</p></div>
+</div>
             </div>
         </div>
 

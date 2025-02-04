@@ -51,6 +51,10 @@
                                 <ul class="dropdown-menu">
                                     
 <li>
+    <a href="../utilities" class="dropdown-item">General</a>
+</li>
+                                    
+<li>
     <a href="../utilities/gensources/" class="dropdown-item">Generate Sources</a>
 </li>
                                     
@@ -106,6 +110,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#example-files" class="nav-link">Example files</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -134,7 +142,7 @@ The file must contain:</p>
 <p>For <strong>runs in parallel</strong> ,i.e with multiple source files, then only the prefix to the NetCDF file should be provided, and the program will automatically append <code>_001.nc</code> for the first core and <code>_002.nc</code> for the second core and so on. So you must prepare source files that end exactly that way up to the number of cores you are using for the run.</p>
 <p><strong>3. ibm_input_file</strong></p>
 <p>The IBM file is <strong>not NetCDF</strong> only because DALES still takes a text file as input for the IBM and it is important that the same file use for IBM in the LES is used for Adepostles.</p>
-<h3 id="example-files">Example files:</h3>
+<h2 id="example-files">Example files</h2>
 <p><strong>field_dump</strong>
 Here is an example of the result of <code>ncdump -h</code> of a fielddump with the expected format:</p>
 <pre><code>dimensions:
@@ -190,7 +198,7 @@ group: s0 {
 
   // group attributes:
                 :tracname = &quot;s0&quot; ;
-                :traclong = &quot;s0_x_  8_y_ 30&quot; ;
+                :traclong = &quot;s0_x_8_y_30&quot; ;
                 :unit = &quot;kg/kg&quot; ;
                 :molar_mass = -999. ;
                 :lemis = &quot;true&quot; ;
@@ -207,7 +215,7 @@ group: s1 {
 
   // group attributes:
                 :tracname = &quot;s1&quot; ;
-                :traclong = &quot;s1_x_  8_y_ 45&quot; ;
+                :traclong = &quot;s1_x_8_y_45&quot; ;
                 :unit = &quot;kg/kg&quot; ;
                 :molar_mass = -999. ;
                 :lemis = &quot;true&quot; ;

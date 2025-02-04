@@ -51,6 +51,10 @@
                                 <ul class="dropdown-menu">
                                     
 <li>
+    <a href=".." class="dropdown-item">General</a>
+</li>
+                                    
+<li>
     <a href="../gensources/" class="dropdown-item">Generate Sources</a>
 </li>
                                     
@@ -100,13 +104,248 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
+            <li class="nav-item" data-bs-level="1"><a href="#netcdf-field-merger-and-profile-adder" class="nav-link">NetCDF Field Merger and Profile Adder</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#overview" class="nav-link">Overview</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#components" class="nav-link">Components</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#key-classes-and-functions" class="nav-link">Key Classes and Functions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#usage" class="nav-link">Usage</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#configuration-parameters" class="nav-link">Configuration Parameters</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#requirements" class="nav-link">Requirements</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#limitations-and-considerations" class="nav-link">Limitations and Considerations</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#notes" class="nav-link">Notes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#example-workflow" class="nav-link">Example Workflow</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#netcdf-field-subsampling-utility" class="nav-link">NetCDF Field Subsampling Utility</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#overview_1" class="nav-link">Overview</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#components_1" class="nav-link">Components</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#key-functions" class="nav-link">Key Functions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#usage_1" class="nav-link">Usage</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#configuration-options" class="nav-link">Configuration Options</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#workflow" class="nav-link">Workflow</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#requirements_1" class="nav-link">Requirements</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#key-features" class="nav-link">Key Features</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#limitations-and-considerations_1" class="nav-link">Limitations and Considerations</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h3 id="how-to-post-process-dales-output-to-a-fielddump-adepostles-accepts">How to post process DALES output to a fielddump ADEpostLES accepts</h3>
-<p>WIP</p></div>
+<h1 id="netcdf-field-merger-and-profile-adder">NetCDF Field Merger and Profile Adder</h1>
+<h2 id="overview">Overview</h2>
+<p>This utility provides a comprehensive solution for merging distributed NetCDF files from parallel computational simulations and adding profile variables to the merged dataset.</p>
+<h2 id="components">Components</h2>
+<h3 id="1-fieldmergepy">1. <code>fieldmerge.py</code></h3>
+<p>A Python script with two primary functionalities:
+- Merging distributed NetCDF files from multiple processing tiles
+- Adding profile variables to an existing NetCDF dataset</p>
+<h3 id="2-mergesh">2. <code>merge.sh</code></h3>
+<p>A shell script for submitting the field merging job to a SLURM-managed high-performance computing (HPC) environment.</p>
+<h2 id="key-classes-and-functions">Key Classes and Functions</h2>
+<h3 id="postprocessfield-class"><code>PostProcessField</code> Class</h3>
+<p>Manages the merging of NetCDF files from multiple processing tiles.</p>
+<h4 id="methods">Methods</h4>
+<ul>
+<li><code>__init__(file_path)</code>: Initializes the merger by discovering and organizing NetCDF files</li>
+<li><code>extract_field(var_name, time_start, time_end)</code>: Extracts variable data across all tiles for a specified time range</li>
+<li><code>save_to_single_netcdf(output_file, chunk_size)</code>: Merges all discovered NetCDF files into a single file</li>
+</ul>
+<h3 id="main-functions">Main Functions</h3>
+<ul>
+<li><code>add_profiles_to_dataset(profile_path, dataset_path)</code>: Adds profile variables to an existing NetCDF file</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<h3 id="command-line-interface">Command-line Interface</h3>
+<p>Two primary sub-commands are available:</p>
+<ol>
+<li>Merge NetCDF Files</li>
+</ol>
+<pre><code class="language-bash">python fieldmerge.py merge --input_dir /path/to/netcdf/files \
+                           --output_file completefielddump.nc \
+                           --chunk_size 50 \
+                           --profile_file optional_profiles.nc
+</code></pre>
+<ol>
+<li>Add Profiles to Existing Dataset</li>
+</ol>
+<pre><code class="language-bash">python fieldmerge.py add_profiles --profile_file profiles.nc \
+                                  --dataset_file existing_dataset.nc
+</code></pre>
+<h3 id="hpc-deployment">HPC Deployment</h3>
+<p>The <code>merge.sh</code> script provides a SLURM job configuration for running the merge process:</p>
+<pre><code class="language-bash">sbatch merge.sh
+</code></pre>
+<h2 id="configuration-parameters">Configuration Parameters</h2>
+<h3 id="merge-command">Merge Command</h3>
+<ul>
+<li><code>--input_dir</code>: Directory containing distributed NetCDF files</li>
+<li><code>--output_file</code>: Path for the merged output file</li>
+<li><code>--chunk_size</code>: Number of time steps to process in each iteration (default: 50)</li>
+<li><code>--profile_file</code>: Optional profile file to merge with the dataset</li>
+</ul>
+<h3 id="add-profiles-command">Add Profiles Command</h3>
+<ul>
+<li><code>--profile_file</code>: Path to the profile NetCDF file</li>
+<li><code>--dataset_file</code>: Path to the existing NetCDF dataset</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Python 3.x</li>
+<li>Libraries:</li>
+<li><code>numpy</code></li>
+<li><code>netCDF4</code></li>
+<li><code>tqdm</code></li>
+</ul>
+<h2 id="limitations-and-considerations">Limitations and Considerations</h2>
+<ul>
+<li>Assumes a specific file naming convention for distributed NetCDF files</li>
+<li>Requires matching time dimensions between profile and main dataset</li>
+<li>Memory usage depends on <code>chunk_size</code> and total dataset size</li>
+</ul>
+<h2 id="notes">Notes</h2>
+<ul>
+<li>Supports merging files from multiple processing tiles</li>
+<li>Allows optional addition of profile variables post-merging</li>
+</ul>
+<h2 id="example-workflow">Example Workflow</h2>
+<ol>
+<li>Run parallel simulation generating multiple NetCDF files</li>
+<li>Use <code>fieldmerge.py merge</code> to combine files into a single dataset</li>
+<li>Optionally add profile variables using the same script</li>
+</ol>
+<h1 id="netcdf-field-subsampling-utility">NetCDF Field Subsampling Utility</h1>
+<h2 id="overview_1">Overview</h2>
+<p>This utility provides a flexible tool for subsampling large NetCDF files, allowing users to extract time-series data at different sampling rates while preserving the original dataset's structure and attributes.</p>
+<h2 id="components_1">Components</h2>
+<h3 id="1-fieldsubsamplepy">1. <code>fieldsubsample.py</code></h3>
+<p>A Python script for subsampling NetCDF files with the following key features:
+- Extracting time series data at specified sampling intervals
+- Skipping initial non-physical time steps
+- Batch processing of large datasets
+- Preserving original variable attributes and global metadata</p>
+<h3 id="2-subsamplesh">2. <code>subsample.sh</code></h3>
+<p>A SLURM job script for submitting the field subsampling process to a high-performance computing (HPC) environment.</p>
+<h2 id="key-functions">Key Functions</h2>
+<h3 id="subsample_netcdf"><code>subsample_netcdf()</code></h3>
+<p>Primary function for subsampling NetCDF files</p>
+<h4 id="parameters">Parameters</h4>
+<ul>
+<li><code>input_file</code> (str): Path to the source NetCDF file</li>
+<li><code>output_dir</code> (str, optional): Directory to save subsampled files (default: current directory)</li>
+<li><code>skip_first</code> (int, optional): Number of initial time steps to skip (default: 120)</li>
+<li><code>sampling_rates</code> (list, optional): List of sampling rates in seconds (default: [5, 10, 30, 60])</li>
+<li><code>nbatches</code> (int, optional): Number of batches to process data (default: 10)</li>
+</ul>
+<h2 id="usage_1">Usage</h2>
+<h3 id="command-line-interface_1">Command-line Interface</h3>
+<pre><code class="language-bash">python fieldsubsample.py input_file.nc \
+    --output_dir ./output \
+    --skip_first 432 \
+    --sampling_rates 1,5,10,30,60 \
+    --nbatches 10
+</code></pre>
+<h3 id="hpc-deployment_1">HPC Deployment</h3>
+<p>Use the provided <code>subsample.sh</code> SLURM script:</p>
+<pre><code class="language-bash">sbatch subsample.sh
+</code></pre>
+<h2 id="configuration-options">Configuration Options</h2>
+<h3 id="command-line-arguments">Command-line Arguments</h3>
+<ul>
+<li><code>input_file</code>: Required input NetCDF file path</li>
+<li><code>--output_dir</code>: Output directory for subsampled files</li>
+<li><code>--skip_first</code>: Number of initial time steps to skip</li>
+<li><code>--sampling_rates</code>: Comma-separated sampling rates (in seconds)</li>
+<li><code>--nbatches</code>: Number of data processing batches</li>
+</ul>
+<h2 id="workflow">Workflow</h2>
+<ol>
+<li>Load the original NetCDF file</li>
+<li>Skip specified initial time steps</li>
+<li>Create subsampled files at different sampling rates</li>
+<li>Preserve original variable attributes and metadata</li>
+<li>Save output files with rate-specific naming (e.g., <code>fielddump_10s.nc</code>)</li>
+</ol>
+<h2 id="requirements_1">Requirements</h2>
+<ul>
+<li>Python 3.x</li>
+<li>Libraries:</li>
+<li><code>numpy</code></li>
+<li><code>netCDF4</code></li>
+<li><code>tqdm</code></li>
+</ul>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li>Flexible sampling rate configuration</li>
+<li>Batch processing for large datasets</li>
+<li>Preserves original data structure</li>
+<li>Handles time-dependent and time-independent variables</li>
+<li>Supports multiple output files for different sampling intervals</li>
+</ul>
+<h2 id="limitations-and-considerations_1">Limitations and Considerations</h2>
+<ul>
+<li>Assumes uniform time step in source data</li>
+<li>Memory usage depends on dataset size and batch configuration</li>
+<li>Requires selection of skip_first and sampling rates</li>
+</ul></div>
             </div>
         </div>
 

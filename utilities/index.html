@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Configuration - ADEpostLES Docs</title>
+        <title>Utilities - ADEpostLES Docs</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/fontawesome.min.css" rel="stylesheet">
         <link href="../css/brands.min.css" rel="stylesheet">
@@ -44,26 +44,26 @@
                                 <a href="../run/" class="nav-link">Run</a>
                             </li>
                             <li class="nav-item">
-                                <a href="./" class="nav-link active" aria-current="page">Configuration</a>
+                                <a href="../namoptions/" class="nav-link">Configuration</a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Utilities</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
-    <a href="../utilities" class="dropdown-item">General</a>
+    <a href="." class="dropdown-item">General</a>
 </li>
                                     
 <li>
-    <a href="../utilities/gensources/" class="dropdown-item">Generate Sources</a>
+    <a href="gensources/" class="dropdown-item">Generate Sources</a>
 </li>
                                     
 <li>
-    <a href="../utilities/postprocesdales/" class="dropdown-item">PostProcess DALES</a>
+    <a href="postprocesdales/" class="dropdown-item">PostProcess DALES</a>
 </li>
                                     
 <li>
-    <a href="../utilities/visualizations/" class="dropdown-item">Visualize Results</a>
+    <a href="visualizations/" class="dropdown-item">Visualize Results</a>
 </li>
                                 </ul>
                             </li>
@@ -75,16 +75,6 @@
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
-                            <li class="nav-item">
-                                <a rel="prev" href="../run/" class="nav-link">
-                                    <i class="fa fa-arrow-left"></i> Previous
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a rel="next" href="../utilities/gensources/" class="nav-link">
-                                    Next <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </li>
                     </ul>
                 </div>
             </div>
@@ -104,20 +94,8 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="1"><a href="#config-file-sample" class="nav-link">Config file sample:</a>
+            <li class="nav-item" data-bs-level="1"><a href="#utilities" class="nav-link">Utilities</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#run-section" class="nav-link">RUN Section</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#boundary-section" class="nav-link">BOUNDARY Section</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#ibm-section" class="nav-link">IBM Section</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
               </ul>
             </li>
         </ul>
@@ -125,69 +103,9 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="config-file-sample">Config file sample:</h1>
-<p>Sample <em>namoptions</em> file:</p>
-<pre><code>&amp;RUN
-runtime    =  700
-dtmax      =  1
-ladaptivedt  =  .true.
-lanisotrop = .true.
-rkmethod = 2
-field_load_chunk_size = 2
-output_save_interval = 5
-courant_limit = 0.8
-vonneumann_limit = 2
-
-field_dump_path = &quot;fielddump_30s.nc&quot;
-sources_prefix = &quot;tracer_inp/tracer_inp_001_001.nc&quot;
-outputfile_path = &quot;must_conc_30s_periodictest.nc&quot;
-/
-
-&amp;BOUNDARY
-xboundary = 12
-yboundary = 12
-/
-
-&amp;IBM
-lapplyibm = .true.
-ibm_input_file = &quot;ibm.inp.001&quot;
-/
-</code></pre>
-<h2 id="run-section">RUN Section</h2>
-<p>Parameters controlling the core runtime behavior and input/output settings.</p>
-<h4 id="time-control">Time Control</h4>
-<ul>
-<li><code>runtime</code>: duration of the simulation is seconds</li>
-<li><code>dtmax</code> : max timestep of the simulation in seconds</li>
-<li><code>ladaptivedt</code>: (optional default true) switch to use adaptive timestep, if tuned off then dtmax is the timestep for the simulation.</li>
-<li><code>courant_limit</code>: (optional) CFL limit, adviced around 0.3 for complex geometries (defaults depend on RK scheme)</li>
-<li><code>vonneumann_limit</code>: (optional) von neumann limit, usually not the limiting factor for the timestep but adviced around 1 (defaults depend on RK scheme),</li>
-<li><code>output_save_interval</code>: number of seconds between result saves (default 20)</li>
-</ul>
-<h4 id="simulation-parameters">Simulation Parameters</h4>
-<ul>
-<li><code>lanisotrop</code>: (default true), use anisotrophic diffusion scheme (moddiff.f90)</li>
-<li><code>rkmethod</code>: whick Runge-Kutta method to use: 1. euler, 2.heun, 3.rk3, 4. rk4. (default 1)</li>
-<li><code>field_load_chunk_size</code>: integer that controls how many time steps of the wind field are loaded; how big is the chunk. The larger it is, the faster the simulation (less i/o) but the more memory requirements.</li>
-</ul>
-<h4 id="file-configuration">File Configuration</h4>
-<ul>
-<li><code>field_dump_path</code>: path for the LES output .nc file (<a href="/run/#example-files">example</a>)</li>
-<li><code>sources_prefix</code>: file or prefix of the tracer source .nc file (<a href="/run/#example-files">example</a>)</li>
-<li><code>outputfile_path</code>: path where the results will be saved. This filename will be suffixed with .001, .002, etc for the processor number in case parallel simulations are run.</li>
-</ul>
-<h2 id="boundary-section">BOUNDARY Section</h2>
-<p>possible values:  11: Neumann 1st Order, 12: Neumann 2nd Order, 2: Periodic. It is not recomended to use 1st order BC</p>
-<ul>
-<li><code>xboundary</code>: boundary condition for east-west direction</li>
-<li><code>yboundary</code>: boundary condition for north-south direction</li>
-</ul>
-<h2 id="ibm-section">IBM Section</h2>
-<p>Immersed Boundary Method configuration.</p>
-<ul>
-<li><code>lapplyibm</code>: boolean to use ibm or not</li>
-<li><code>ibm_input_file</code>: path to the ibm file</li>
-</ul></div>
+<h1 id="utilities">Utilities</h1>
+<p>Utilities to handle NetCDF output from DALES and also to generate source profiles and prepare the run of DALES and ADEpostLES:</p>
+<p>Source code [here] (https://github.com/lorenzodonadio/les-utils)</p></div>
             </div>
         </div>
 
