@@ -4,7 +4,6 @@ Sample _namoptions_ file:
 
 ```
 &RUN
-iexpnr     =  001
 runtime    =  700
 dtmax      =  1
 ladaptivedt  =  .true.

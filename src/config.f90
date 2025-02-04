@@ -19,7 +19,6 @@ module config
    logical :: lperiodic_field_pad = .true.  !< if to use periodic BC for reconstructing the field ghost cells, if set to false it uses interpolation
 
    integer :: rkmethod = 1                   !< 1. euler, 2.heun, 3.rk3, 4. rk4
-   integer :: iexpnr = -1                    ! Default value indicates it must be specified
    integer :: runtime = 25                   !< seconds
    integer :: field_load_chunk_size = 100    ! Sensible default
 
@@ -46,7 +45,7 @@ contains
       character(len=256) :: config_filename
       integer :: ios
       ! Namelists for the configuration
-      namelist /RUN/ iexpnr, runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
+      namelist /RUN/ runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
          field_load_chunk_size, field_dump_path,sources_prefix, outputfile_path, courant_limit, vonneumann_limit
 
       namelist /IBM/ lapplyibm, ibm_input_file
@@ -92,10 +91,6 @@ contains
       ! Ensure all necessary parameters have been set and provide default values or errors if required
 
       ! Validate &RUN namelist parameters
-      if (iexpnr == -1) then
-         write(*,*) 'Error: Parameter iexpnr is required in the &RUN namelist but was not provided.'
-         stop 'Execution halted due to missing iexpnr.'
-      end if
 
       if (trim(field_dump_path) == '') then
          write(*,*) 'Error: Parameter field_dump_path is required in the &RUN namelist but was not provided.'
@@ -113,7 +108,6 @@ contains
          stop 'Execution halted due to wrong rkmethod'
       end if
       write(*,*) 'Configuration loaded successfully:'
-      write(*,*) 'iexpnr:', iexpnr
       write(*,*) 'runtime:', runtime
       write(*,*) 'dtmax:', dtmax
       write(*,*) 'ladaptivedt:', ladaptivedt

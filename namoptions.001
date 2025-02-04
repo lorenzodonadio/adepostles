@@ -1,5 +1,4 @@
 &RUN
-iexpnr     =  001
 runtime    =  500
 dtmax      =  1
 ladaptivedt  =  .true.
