@@ -9,6 +9,7 @@ program adepostles
    use modibm, only : init_ibm,apply_ibm,enforce_zero_ibm
    use modtracer, only: load_tracer_init_and_sources,init_concentration_output_nc,&
       write_concentration_timeloop,close_concentration_nc,apply_source
+   use modchem, only: init_chem,apply_chem
    use modmpi, only: init_mpi,exit_mpi
    implicit none
 
@@ -27,6 +28,7 @@ program adepostles
    call init_diff
    call init_ibm
    call load_tracer_init_and_sources
+   call init_chem
    call init_concentration_output_nc
 !    stop 'Init completed succesfully'
    write (*,*) "Starting timeloop"
@@ -43,7 +45,7 @@ program adepostles
       ! call advecc_kappa(c0,cp)
       call apply_advection
       call apply_ibm
-
+      call apply_chem
       call time_step
       call apply_bc
       call enforce_zero_ibm

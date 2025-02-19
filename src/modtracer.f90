@@ -1,21 +1,25 @@
 module modtracer
+   use iso_fortran_env, only: real32
+   use modtracer_type, only: T_tracer_collection
    use modglobal, only: nsv
    use netcdf
    implicit none
 
    integer :: output_ncid !< where to write the output concentration
 
-!    integer :: x_dim, y_dim, z_dim, time_dim  ! Dimension IDs
-!    integer :: x_size, y_size, z_size, time_size
-!    character(len=80) :: group_name
+   !    integer :: x_dim, y_dim, z_dim, time_dim  ! Dimension IDs
+   !    integer :: x_size, y_size, z_size, time_size
+   !    character(len=80) :: group_name
 
    ! Arrays for storing dimensions and variable data
+   type(T_tracer_collection) :: tracers
    real, allocatable :: cm(:,:,:,:)
    real, allocatable :: c0(:,:,:,:)
    real, allocatable :: cp(:,:,:,:)
    real, allocatable :: source(:,:)
    integer, allocatable :: source_meta(:,:) !> contains i,j,k,tracernumber,sourcenumber,idx, corresponding to the source row that holds the actual time series data
    integer :: src_t_idx = 1
+   
 contains
    !       allocate(c0   (2-ih:i1+ih,2-jh:j1+jh,k1))
    ! allocate(cp   (2-ih:i1+ih,2-jh:j1+jh,k1))
@@ -51,14 +55,14 @@ contains
       use config, only: sources_prefix
       use mpi_f08
       integer :: varid, src_varid, numsources,totnumsources, retval
-      integer :: itsv, itsrc, src_counter                ! Loop counters
+      integer :: i, itsv, itsrc, src_counter                ! Loop counters
       integer :: src_x,src_y,src_z     !grid
       integer :: ncid, numgrps,groupid !netcdf stuff
       integer :: my_id !mpi stuff
       integer,allocatable :: grpids(:)
       character(len=80) :: varname
       character(len=256) :: sources_path
-
+      character(len=256) :: group_name
       !   character(len=256) ::desc
       !   character(len=256) ::hist
       !   DEBUG VARS
@@ -94,7 +98,9 @@ contains
 
       if (nsv /= numgrps) stop 'numtracers attribute does not equal the number of groups in sources_path'
 
-      !   write(*,*) "groups infoo"
+      allocate(tracers%data(nsv))
+      write(*,*) "Tracers data shape: ",shape(tracers%data(nsv))
+      
       !   write(*,*) numgrps, grpids
       ! Allocate arrays for tracers and source variables
       allocate(cm(2-ih:i1+ih,2-jh:j1+jh,k1,nsv))
@@ -124,6 +130,7 @@ contains
          !  call nchandle_error(retval, 'Error: Could not access group '//trim(group_name))
          groupid = grpids(itsv)
          print *, 'Reading group:', groupid
+         
          ! Retrieve `numsources` attribute within each group
          retval = nf90_get_att(groupid, nf90_global, 'numsources', numsources)
          call nchandle_error(retval, 'Error: Could not retrieve "numsources" attribute in group ')
@@ -132,6 +139,10 @@ contains
          retval = nf90_inq_varid(groupid, 'init', varid)
          call nchandle_error(retval, 'Error: Could not read "init" variable in group ')
 
+         call read_tracer_attributes(groupid,tracers%data(itsv))
+         tracers%data(itsv)%trac_idx = itsv
+
+         call tracers%data(itsv)%print_properties()
 
          !!!!!!!!!!!!!!!! DEBUG
          !  ! Inquire the dimensions of `init` in the NetCDF file
@@ -178,7 +189,59 @@ contains
       ! Close the NetCDF file
       retval = nf90_close(ncid)
       call nchandle_error(retval, 'Error: Could not close NetCDF file')
+
+
+
+
+      ! The initial conditions should apply also to the "previous iteration", so no time gradients
+      ! Also the ghost cells are filled with the values of the initial conditions at the edges
+      do i=1,ih
+         c0(2-i,:,:,:) = c0(2-ih+1,:,:,:) ! West side
+         c0(i1+i,:,:,:) = c0(i1,:,:,:)    ! east boundary
+         c0(:,2-i,:,:) = c0(:,2-jh+2,:,:) ! south boundary
+         c0(:,j1+i,:,:) = c0(:,j1,:,:)    ! north boundary
+      end do
+
+      cm = c0
+
    end subroutine load_tracer_init_and_sources
+
+   subroutine read_tracer_attributes(groupid, tracer)
+      use modtracer_type , only: T_tracer
+      use netcdf_utils, only: nchandle_error
+      use netcdf
+      implicit none
+      integer, intent(in) :: groupid
+      type(T_tracer), intent(inout) :: tracer
+      integer :: retval
+      character(len=64) :: tracname
+      character(len=64) :: group_name
+      character(len=64) :: traclong
+      character(len=16) :: unit
+      real(real32) :: molar_mass
+      integer :: lemis_int
+
+      retval = nf90_inq_grpname(groupid, group_name)
+      print *, 'Group name: ', group_name
+      call nchandle_error(retval, 'Error: Could not inquire group name')
+      retval = nf90_get_att(groupid, nf90_global, 'tracname', tracname)
+
+      if (trim(group_name) /= trim(tracname)) then
+         write(*,*) "ERROR: Group name: ", trim(group_name), "Must Equal  Tracname attribute: ", trim(tracname)
+         stop "Mismatch between group name and tracname attribute."
+      end if
+      retval = nf90_get_att(groupid, nf90_global, 'traclong', traclong)
+      retval = nf90_get_att(groupid, nf90_global, 'unit', unit)
+      retval = nf90_get_att(groupid, nf90_global, 'molar_mass', molar_mass)
+      retval = nf90_get_att(groupid, nf90_global, 'lemis', lemis_int)
+
+      tracer%tracname = trim(tracname)
+      tracer%traclong = trim(traclong)
+      tracer%unit = trim(unit)
+      tracer%molar_mass = molar_mass
+      tracer%lemis = lemis_int /= 0
+      
+   end subroutine read_tracer_attributes
 
 
    subroutine init_concentration_output_nc()

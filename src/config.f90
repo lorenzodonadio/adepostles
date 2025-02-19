@@ -13,6 +13,9 @@ module config
    character(len=256) :: field_dump_path = ''  ! Must be specified
    character(len=256) :: sources_prefix = ''  ! Must be specified
    character(len=256) :: outputfile_path = 'concentration_out.nc'  ! Must be specified
+   character(len=256) :: ibm_input_file = ''   ! Must be specified
+   character(len=256) :: config_filename
+
 
    logical :: ladaptivedt = .false.          ! Sensible default
    logical :: lanisotrop = .true.
@@ -31,7 +34,7 @@ module config
    ! Configuration variables for &IBM namelist
    ! /IBM/
    logical :: lapplyibm = .false.                 ! Sensible default
-   character(len=256) :: ibm_input_file = ''   ! Must be specified
+
 
    !other flags
 
@@ -42,7 +45,6 @@ module config
 contains
 
    subroutine read_config_file()
-      character(len=256) :: config_filename
       integer :: ios
       ! Namelists for the configuration
       namelist /RUN/ runtime, dtmax,output_save_interval,rkmethod, ladaptivedt, lanisotrop,lperiodic_field_pad,&
@@ -51,7 +53,6 @@ contains
       namelist /IBM/ lapplyibm, ibm_input_file
 
       namelist /BOUNDARY/ xboundary, yboundary
-
 
       if (command_argument_count() >=1) then
          call get_command_argument(1,config_filename)
