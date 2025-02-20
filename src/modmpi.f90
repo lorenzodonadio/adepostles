@@ -14,7 +14,7 @@ contains
 
       is_root = my_id == 0
 
-      if(myid==0)then
+      if(is_root)then
          CPU_program0 = MPI_Wtime()
          write(*,*) 'MPI mpi_size: ', mpi_size
        end if
@@ -22,7 +22,7 @@ contains
 
    subroutine exit_mpi()
       
-      if(myid==0)then
+      if(is_root)then
          CPU_program = MPI_Wtime() - CPU_program0
          write(6,*)'TOTAL wall time = ', CPU_program
       end if
