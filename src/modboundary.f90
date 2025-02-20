@@ -95,7 +95,7 @@ contains
             field(:,jh-j,:) = field(:,jh-j+1,:) ! NORTH
             field(:,j1+j,:) = field(:,j1+j-1,:) ! SOUTH
          end do
-       case(12)  ! PERIODIC 2nd Order
+       case(12)  ! NEUMANN 2nd Order
          do j = 1, jh
             ! NORTH
             field(:,jh-j,:) = r6_11*field(:,jh-j+1,:)+r24_33*field(:,jh-j+2,:)-r3_11*field(:,jh-j+3,:)

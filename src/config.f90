@@ -80,6 +80,14 @@ contains
          write(*,*) 'Error:', ios, ' In file: ', trim(config_filename)
          stop 'Execution halted due to errors in the &IBM namelist.'
       end if
+      ! Read the &BOUNDARY namelist
+      ! rewind(ifconfig)  ! Rewind to ensure the file pointer is at the beginning for a fresh read not needed here
+      
+      read(ifconfig, nml=BOUNDARY, iostat=ios)
+      if (ios /= 0) then
+         write(*,*) 'Error:', ios, ' In file: ', trim(config_filename)
+         stop 'Execution halted due to errors in the &BOUNDARY namelist.'
+      end if
 
       ! Close the configuration file
       close(ifconfig)
